@@ -3,6 +3,7 @@ using SparseArrays: sparsevec, spzeros, sparse
 using LinearAlgebra: I, eigvals
 using Logging: @info
 using Printf: @sprintf
+using PGFPlotsX: @pgf, Plot, Axis, Table, pgfsave, SemiLogYAxis
 
 function noncharacteristic_operator(p, N, R)
   # Total number of points
@@ -143,10 +144,10 @@ function convergence_test(p, Ns, R)
       error = %.2e""" err_NC[iter]
     end
 
-    (NC, x, H) = characteristic_operator(p, N, R)
+    (C, x, H) = characteristic_operator(p, N, R)
     q0 = [ue.(x, 0); ue_t.(x, 0); 0; 0]
 
-    qf = exp(t_final * Matrix(NC)) * q0
+    qf = exp(t_final * Matrix(C)) * q0
     qf_ex = [ue.(x, 1); ue_t.(x, 1); ue(0, 1); ue(1, 1)]
 
     ϵ = qf_ex - qf
@@ -164,3 +165,125 @@ function convergence_test(p, Ns, R)
     end
   end
 end
+
+function make_spectrum_plots(p, N, R)
+  h = 1 / N
+  (NC, _...) = noncharacteristic_operator(p, N, R)
+  (C, _...)  = characteristic_operator(p, N, R)
+
+  ev_NC = h * eigvals(Matrix(NC))
+  ev_C  = h * eigvals(Matrix(C))
+
+  ymin, ymax, xmin, xmax = -2.5, 2.5, -2, 1e-10
+
+  pts = nothing
+  if !all(xmin .< real.(ev_NC) .< xmax)
+    pts = ev_NC[findall(.!(xmin .< real.(ev_NC) .< xmax))]
+    @assert length(pts) == 2
+    @assert pts[1] ≈ pts[2]
+    @assert abs(imag(pts[1])) < 1e-14
+    ev_NC = [ev_NC[xmin .< real.(ev_NC) .< xmax]; -2.5]
+  end
+  @assert all(xmin .< real.(ev_C ) .< xmax)
+  @assert all(ymin .< imag.(ev_NC) .< ymax)
+  @assert all(ymin .< imag.(ev_C ) .< ymax)
+
+  xmin = -3
+
+  @pgf a = Axis(
+            {
+             ymin = ymin,
+             ymax = ymax,
+             xmin = xmin,
+             xmax = xmax,
+             legend_entries = {"non-characteristic", "characteristic"},
+             title = "R = $R, N = $N",
+             xlabel = "\$\\textrm{Re}(h \\lambda)\$",
+             ylabel = "\$\\textrm{Im}(h \\lambda)\$",
+            }
+           )
+  @pgf push!(a, Plot(
+                     {
+                      only_marks,
+                      color = "red",
+                      mark = "x",
+                     },
+                     Table(real.(ev_NC), imag.(ev_NC)))
+            )
+  @pgf push!(a, Plot(
+                     {
+                      only_marks,
+                      color = "blue",
+                      mark = "+",
+                     },
+                     Table(real.(ev_C), imag.(ev_C))),
+            )
+  if !isnothing(pts)
+    @pgf push!(a,
+               [@sprintf """
+                \\node[anchor=south] () at (axis cs:-2.5,0){\$%.2e\$};
+                \\node[anchor=west] (source) at (axis cs:-2.5,0){};
+                \\node (destination) at (axis cs:-2.75,0){};
+                \\draw[->](source)--(destination);
+                """ real(pts[1])])
+  end
+
+  pgfsave("bc_spectra_$R.tex", a)
+  pgfsave("bc_spectra_$R.pdf", a)
+end
+
+function compare_eigs(p, N)
+  h = 1 / N
+  Rs = -0.95:0.05:0.95
+  real_C = zeros(length(Rs))
+  real_NC = zeros(length(Rs))
+  imag_C = zeros(length(Rs))
+  imag_NC = zeros(length(Rs))
+  for (iter, R) = enumerate(Rs)
+    (NC, _...) = noncharacteristic_operator(p, N, R)
+    (C, _...)  = characteristic_operator(p, N, R)
+
+    ev_NC = h * eigvals(Matrix(NC))
+    ev_C  = h * eigvals(Matrix(C))
+
+    real_C[iter] = minimum(real.(ev_C))
+    real_NC[iter] = minimum(real.(ev_NC))
+    imag_C[iter] = maximum(imag.(ev_C))
+    imag_NC[iter] = maximum(imag.(ev_NC))
+  end
+
+  @pgf a = SemiLogYAxis(
+                {
+                 xmin = -1,
+                 xmax =  1,
+                 xlabel = "\$R\$",
+                 ylabel = "max\$(-\\textrm{Re}(h \\lambda)\$",
+                 legend_entries = {"non-characteristic", "characteristic"},
+                }
+               )
+  @pgf push!(a, Plot(
+                     {
+                      only_marks,
+                      color = "red",
+                      mark = "x",
+                     },
+                     Table(Rs, -real_NC)
+                    )
+            )
+  @pgf push!(a, Plot(
+                     {
+                      only_marks,
+                      color = "blue",
+                      mark = "+",
+                     },
+                     Table(Rs, -real_C)
+                    )
+            )
+  pgfsave("real_eig.tex", a)
+  pgfsave("real_eig.pdf", a)
+end
+
+for R in (-0.9, 0, 0.9)
+  make_spectrum_plots(4, 50, R)
+end
+compare_eigs(4, 50)
