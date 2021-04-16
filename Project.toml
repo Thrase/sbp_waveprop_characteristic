@@ -1,4 +1,7 @@
 [deps]
 DiagonalSBP = "36369e19-1f1d-49f4-a65d-f0b77e6b4437"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
 PGFPlotsX = "8314cec4-20b6-5062-9cdb-752b83310925"
+Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
+SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
