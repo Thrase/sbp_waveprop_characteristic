@@ -1,0 +1,7 @@
+name = "DiagonalSBP"
+uuid = "36369e19-1f1d-49f4-a65d-f0b77e6b4437"
+authors = ["Jeremy E Kozdon <jekozdon@nps.edu>"]
+version = "0.1.0"
+
+[deps]
+SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
