@@ -76,31 +76,6 @@ let
     #        (the i'th column of this stores whether an element face is on the
     #        plus side or minus side of the global face)
 
-    #=pgf_axis = PGFPlots.Axis(style="width=5cm, height=5cm, ticks=none",
-                             xlabel=PGFPlots.L"$x$",
-                             ylabel=PGFPlots.L"$y$",
-                             xmin = -2, xmax = 2,
-                             ymin = -2, ymax = 2)
-    for f in 1:nfaces
-      if FToB[f] != BC_JUMP_INTERFACE
-        (e, lf) = FToE[1,f], FToLF[1,f]
-        if lf == 1
-          v1, v2 = EToV[1, e], EToV[3, e]
-        elseif lf == 2
-          v1, v2 = EToV[2, e], EToV[4, e]
-        elseif lf == 3
-          v1, v2 = EToV[1, e], EToV[2, e]
-        else
-          v1, v2 = EToV[3, e], EToV[4, e]
-        end
-        x = verts[1, [v1 v2]][:]
-        y = verts[2, [v1 v2]][:]
-        push!(pgf_axis, PGFPlots.Linear(x, y, style="no marks, solid, black"))
-      end
-    end
-    push!(pgf_axis, PGFPlots.Circle(0,0,1, style = "very thick, red"))
-    PGFPlots.save("square_circle.tikz", pgf_axis)
-    =#
     # Exact solution
     Lx = maximum(verts[1, :])
     Ly = maximum(abs.(verts[2, :]))
@@ -669,47 +644,9 @@ let
             #τ̂exact = (rhsops[e].gN(tspan[2], e)[1], rhsops[e].gN(tspan[2], e)[2], rhsops[e].gN(tspan[2], e)[3], rhsops[e].gN(tspan[2], e)[4])
 
             Δu = qe_u - qexact_u
-            #Δv = qe_v - qexact_v
-            #Δû1 = qe_û1 - qexact_û1
-            #Δû2 = qe_û2 - qexact_û2
-            #Δû3 = qe_û3 - qexact_û3
-            #Δû4 = qe_û4 - qexact_û4
-
-            #Δτ1 = τ̂[1] - τ̂exact[1]
-            #Δτ2 = τ̂[2] - τ̂exact[2]
-
-            #Δτ3 = τ̂[3] - τ̂exact[3]
-            #Δτ4 = τ̂[4] - τ̂exact[4]
-
-            #Mu = rhsops[e].Ã
             Mv = rhsops[e].JH
 
-            #=Mû1 = rhsops[e].H[1]
-            Mû2 = rhsops[e].H[2]
-            Mû3 = rhsops[e].H[3]
-            Mû4 = rhsops[e].H[4]
-
-            Mτ̂1 = rhsops[e].X[1] * rhsops[e].H[1]
-            Mτ̂2 = rhsops[e].X[2] * rhsops[e].H[2]
-            Mτ̂3 = rhsops[e].X[3] * rhsops[e].H[3]
-            Mτ̂4 = rhsops[e].X[4] * rhsops[e].H[4]
-
-            Mu1 = (rhsops[e].nCB[1])' * rhsops[e].X[1] * rhsops[e].H[1] * rhsops[e].nCB[1]
-            Mu2 = (rhsops[e].nCB[2])' * rhsops[e].X[2] * rhsops[e].H[2] * rhsops[e].nCB[2]
-            Mu3 = (rhsops[e].nCB[3])' * rhsops[e].X[3] * rhsops[e].H[3] * rhsops[e].nCB[3]
-            Mu4 = (rhsops[e].nCB[4])' * rhsops[e].X[4] * rhsops[e].H[4] * rhsops[e].nCB[4]
-            =#
             ϵ[lvl] += Δu' * Mv * Δu
-
-            #ϵ_exact[lvl] += qexact_u' * Mv * qexact_u
-
-            #=ϵ[lvl] += 0.5 * Δv' * Mv * Δv + 0.5 * Δu' * Mu * Δu +
-                          0.5 * (1*Δτ1' * Mτ̂1 * Δτ1 - 0*Δu' * Mu1 * Δu +
-                                 1*Δτ2' * Mτ̂2 * Δτ2 - 0*Δu' * Mu2 * Δu +
-                                 1*Δτ3' * Mτ̂3 * Δτ3 - 0*Δu' * Mu3 * Δu +
-                                1*Δτ4' * Mτ̂4 * Δτ4 - 0*Δu' * Mu4 * Δu)
-            =#
-            #ϵ[lvl] += sqrt( 0.5 * (Δτ1' * Mτ̂1 * Δτ1   + Δτ2' * Mτ̂2 * Δτ2  + Δτ3' * Mτ̂3 * Δτ3 + Δτ4' * Mτ̂4 * Δτ4 ))
 
         end # end compute error at lvl
 
