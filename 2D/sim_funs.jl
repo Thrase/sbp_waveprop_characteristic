@@ -1543,9 +1543,9 @@ function waveprop!(dq, q, params, t)
         end
 
         if isnothing(rhsops[e].F)
-          dv .= rhsops[e].JIHI * dv
+            dv .= rhsops[e].JIHI * dv
         else
-          dv .= rhsops[e].JIHI * dv .+ rhsops[e].F(t, e)
+            dv .= rhsops[e].JIHI * dv .+ rhsops[e].F(t, e)
         end
 
         dû1 .= vstar[1]
