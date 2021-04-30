@@ -4,6 +4,159 @@ using SparseArrays
 
 include("sim_funs.jl")
 
+function vinside(x, y, t)
+    r = sqrt.(x .^ 2 + y .^ 2)
+    theta = atan.(y, x)
+    return sin.(t) .* (1 .- exp.(-1 .* r .^ 2)) .* r .* sin.(theta)
+end
+
+function vinside_t(x, y, t)
+    r = sqrt.(x .^ 2 + y .^ 2)
+    theta = atan.(y, x)
+    return cos.(t) .* (1 .- exp.(-1 .* r .^ 2)) .* r .* sin.(theta)
+end
+
+function vinside_tt(x, y, t)
+    r = sqrt.(x .^ 2 + y .^ 2)
+    theta = atan.(y, x)
+    return -sin.(t) .* (1 .- exp.(-1 .* r .^ 2)) .* r .* sin.(theta)
+end
+
+function vinside_x(x, y, t)
+    r = sqrt.(x .^ 2 + y .^ 2)
+    theta = atan.(y, x)
+    dtheta_dx = -1 .* sin.(theta) ./ r
+    dr_dx = cos.(theta)
+    dv_dr =
+        (2 .* r .^ 2 .* exp.(-1 .* r .^ 2) .+ 1 .- exp.(-1 .* r .^ 2)) .*
+        sin.(theta)
+    dv_dtheta = (1 .- exp.(-1 .* r .^ 2)) .* r .* cos.(theta)
+    return sin.(t) .* (dv_dr .* dr_dx + dv_dtheta .* dtheta_dx)
+end
+
+function vinside_y(x, y, t)
+    r = sqrt.(x .^ 2 + y .^ 2)
+    theta = atan.(y, x)
+    dtheta_dy = cos.(theta) ./ r
+    dr_dy = sin.(theta)
+    dv_dr =
+        (2 .* r .^ 2 .* exp.(-1 .* r .^ 2) .+ 1 .- exp.(-1 .* r .^ 2)) .*
+        sin.(theta)
+    dv_dtheta = (1 .- exp.(-1 .* r .^ 2)) .* r .* cos.(theta)
+    return sin.(t) .* (dv_dr .* dr_dy + dv_dtheta .* dtheta_dy)
+end
+
+function force_inside(x, y, t)
+    r = sqrt.(x .^ 2 + y .^ 2)
+    theta = atan.(y, x)
+    u_r =
+        (2 .* r .^ 2 .* exp.(-1 .* r .^ 2) .+ 1 .- exp.(-1 .* r .^ 2)) .*
+        sin.(theta)
+    u_rr = exp.(-1 .* r .^ 2) .* (6 .* r .- 4 .* r .^ 3) .* sin.(theta)
+    u_thetatheta = -(1 .- exp.(-1 .* r .^ 2)) .* r .* sin.(theta)
+    return vinside_tt(x, y, t) .-
+           sin.(t) * (u_rr .+ (1 ./ r) .* u_r .+ (1 ./ r .^ 2) .* u_thetatheta)
+end
+
+function voutside(x, y, t)
+    r = sqrt.(x .^ 2 + y .^ 2)
+    theta = atan.(y, x)
+    return sin.(t) .* ((r .- 1) .^ 2 .* cos.(theta) .+ (r .- 1) .* sin.(theta))
+end
+
+function voutside_t(x, y, t)
+    r = sqrt.(x .^ 2 + y .^ 2)
+    theta = atan.(y, x)
+    return cos.(t) .* ((r .- 1) .^ 2 .* cos.(theta) .+ (r .- 1) .* sin.(theta))
+end
+
+function voutside_tt(x, y, t)
+    r = sqrt.(x .^ 2 + y .^ 2)
+    theta = atan.(y, x)
+    return -sin.(t) .* ((r .- 1) .^ 2 .* cos.(theta) .+ (r .- 1) .* sin.(theta))
+end
+
+function voutside_x(x, y, t)
+    r = sqrt.(x .^ 2 + y .^ 2)
+    theta = atan.(y, x)
+    dtheta_dx = -1 .* sin.(theta) ./ r
+    dr_dx = cos.(theta)
+    dv_dr = 2 .* (r .- 1) .* cos.(theta) .+ sin.(theta)
+    dv_dtheta = -1 .* (r .- 1) .^ 2 .* sin.(theta) .+ (r .- 1) .* cos.(theta)
+    return sin.(t) .* (dv_dr .* dr_dx + dv_dtheta .* dtheta_dx)
+end
+
+function voutside_y(x, y, t)
+    r = sqrt.(x .^ 2 + y .^ 2)
+    theta = atan.(y, x)
+    dtheta_dy = cos.(theta) ./ r
+    dr_dy = sin.(theta)
+    dv_dr = 2 .* (r .- 1) .* cos.(theta) .+ sin.(theta)
+    dv_dtheta = -1 .* (r .- 1) .^ 2 .* sin.(theta) .+ (r .- 1) .* cos.(theta)
+    return sin.(t) .* (dv_dr .* dr_dy + dv_dtheta .* dtheta_dy)
+end
+
+function force_outside(x, y, t)
+    r = sqrt.(x .^ 2 + y .^ 2)
+    theta = atan.(y, x)
+    u_thetatheta = -1 .* (r .- 1) .^ 2 .* cos.(theta) .- (r .- 1) .* sin.(theta)
+    u_r = 2 .* (r .- 1) .* cos.(theta) .+ sin.(theta)
+    u_rr = 2 * cos.(theta)
+    return voutside_tt(x, y, t) .-
+           sin.(t) * (u_rr .+ (1 ./ r) .* u_r .+ (1 ./ r .^ 2) .* u_thetatheta)
+end
+
+function ue(x, y, t, dom, A1 = 5 * exp(1) / (1 + exp(1)), A2 = 5)
+    if dom == 1
+        return A1 * vinside(x, y, t)
+    elseif dom == 2
+        return A2 * voutside(x, y, t)
+    else
+        error("invalid block")
+    end
+end
+
+function ue_x(x, y, t, dom, A1 = 5 * exp(1) / (1 + exp(1)), A2 = 5)
+    if dom == 1
+        return A1 * vinside_x(x, y, t)
+    elseif dom == 2
+        return A2 * voutside_x(x, y, t)
+    else
+        error("invalid block")
+    end
+end
+
+function ue_y(x, y, t, dom, A1 = 5 * exp(1) / (1 + exp(1)), A2 = 5)
+    if dom == 1
+        return A1 * vinside_y(x, y, t)
+    elseif dom == 2
+        return A2 * voutside_y(x, y, t)
+    else
+        error("invalid block")
+    end
+end
+
+function ue_t(x, y, t, dom, A1 = 5 * exp(1) / (1 + exp(1)), A2 = 5)
+    if dom == 1
+        return A1 * vinside_t(x, y, t)
+    elseif dom == 2
+        return A2 * voutside_t(x, y, t)
+    else
+        error("invalid block")
+    end
+end
+
+#u_rr + (1/r)*u_r + (1/r^2)*u_theta,theta
+function force(x, y, t, dom, A1 = 5 * exp(1) / (1 + exp(1)), A2 = 5)
+    if dom == 1
+        return A1 * force_inside(x, y, t)
+    elseif dom == 2
+        return A2 * force_outside(x, y, t)
+    else
+        error("invalid block")
+    end
+end
+
 let
     γ = 1
     β = 2
@@ -104,202 +257,17 @@ let
     Lx = maximum(verts[1, :])
     Ly = maximum(abs.(verts[2, :]))
 
-    c = exp(1) / (1 + exp(1))
-    A = 5
-
-    function vinside(x, y, t)
-        r = sqrt.(x .^ 2 + y .^ 2)
-        theta = atan.(y, x)
-        return A * sin.(t) .* c .* (1 .- exp.(-1 .* r .^ 2)) .* r .* sin.(theta)
-    end
-
-    function voutside(x, y, t)
-        r = sqrt.(x .^ 2 + y .^ 2)
-        theta = atan.(y, x)
-        return A * sin.(t) .*
-               ((r .- 1) .^ 2 .* cos.(theta) .+ (r .- 1) .* sin.(theta))
-    end
-
-    function vinside_t(x, y, t)
-        r = sqrt.(x .^ 2 + y .^ 2)
-        theta = atan.(y, x)
-        return A * cos.(t) .* c .* (1 .- exp.(-1 .* r .^ 2)) .* r .* sin.(theta)
-    end
-
-    function vinside_tt(x, y, t)
-        r = sqrt.(x .^ 2 + y .^ 2)
-        theta = atan.(y, x)
-        return -A * sin.(t) .* c .* (1 .- exp.(-1 .* r .^ 2)) .* r .*
-               sin.(theta)
-    end
-
-    function voutside_t(x, y, t)
-        r = sqrt.(x .^ 2 + y .^ 2)
-        theta = atan.(y, x)
-        return A * cos.(t) .*
-               ((r .- 1) .^ 2 .* cos.(theta) .+ (r .- 1) .* sin.(theta))
-    end
-
-    function voutside_tt(x, y, t)
-        r = sqrt.(x .^ 2 + y .^ 2)
-        theta = atan.(y, x)
-        return -A * sin.(t) .*
-               ((r .- 1) .^ 2 .* cos.(theta) .+ (r .- 1) .* sin.(theta))
-    end
-
-    function vinside_x(x, y, t)
-        r = sqrt.(x .^ 2 + y .^ 2)
-        theta = atan.(y, x)
-        dtheta_dx = -1 .* sin.(theta) ./ r
-        dr_dx = cos.(theta)
-        dv_dr =
-            c *
-            (2 .* r .^ 2 .* exp.(-1 .* r .^ 2) .+ 1 .- exp.(-1 .* r .^ 2)) .*
-            sin.(theta)
-        dv_dtheta = c .* (1 .- exp.(-1 .* r .^ 2)) .* r .* cos.(theta)
-        return A * sin.(t) .* (dv_dr .* dr_dx + dv_dtheta .* dtheta_dx)
-    end
-
-    function vinside_y(x, y, t)
-        r = sqrt.(x .^ 2 + y .^ 2)
-        theta = atan.(y, x)
-        dtheta_dy = cos.(theta) ./ r
-        dr_dy = sin.(theta)
-        dv_dr =
-            c *
-            (2 .* r .^ 2 .* exp.(-1 .* r .^ 2) .+ 1 .- exp.(-1 .* r .^ 2)) .*
-            sin.(theta)
-        dv_dtheta = c .* (1 .- exp.(-1 .* r .^ 2)) .* r .* cos.(theta)
-        return A * sin.(t) .* (dv_dr .* dr_dy + dv_dtheta .* dtheta_dy)
-    end
-
-    function voutside_x(x, y, t)
-        r = sqrt.(x .^ 2 + y .^ 2)
-        theta = atan.(y, x)
-        dtheta_dx = -1 .* sin.(theta) ./ r
-        dr_dx = cos.(theta)
-        dv_dr = 2 .* (r .- 1) .* cos.(theta) .+ sin.(theta)
-        dv_dtheta =
-            -1 .* (r .- 1) .^ 2 .* sin.(theta) .+ (r .- 1) .* cos.(theta)
-        return A * sin.(t) .* (dv_dr .* dr_dx + dv_dtheta .* dtheta_dx)
-    end
-
-    function voutside_y(x, y, t)
-        r = sqrt.(x .^ 2 + y .^ 2)
-        theta = atan.(y, x)
-        dtheta_dy = cos.(theta) ./ r
-        dr_dy = sin.(theta)
-        dv_dr = 2 .* (r .- 1) .* cos.(theta) .+ sin.(theta)
-        dv_dtheta =
-            -1 .* (r .- 1) .^ 2 .* sin.(theta) .+ (r .- 1) .* cos.(theta)
-        return A * sin.(t) .* (dv_dr .* dr_dy + dv_dtheta .* dtheta_dy)
-    end
-
-    function ue(x, y, t, e)
-        if EToDomain[e] == 1
-            return vinside(x, y, t)
-        elseif EToDomain[e] == 2
-            return voutside(x, y, t)
-        else
-            error("invalid block")
-        end
-    end
-
-    function ue_x(x, y, t, e)
-        if EToDomain[e] == 1
-            return vinside_x(x, y, t)
-        elseif EToDomain[e] == 2
-            return voutside_x(x, y, t)
-        else
-            error("invalid block")
-        end
-    end
-
-    function ue_y(x, y, t, e)
-        if EToDomain[e] == 1
-            return vinside_y(x, y, t)
-        elseif EToDomain[e] == 2
-            return voutside_y(x, y, t)
-        else
-            error("invalid block")
-        end
-    end
-
-    function ue_t(x, y, t, e)
-        if EToDomain[e] == 1
-            return vinside_t(x, y, t)
-        elseif EToDomain[e] == 2
-            return voutside_t(x, y, t)
-        else
-            error("invalid block")
-        end
-    end
-
-    function ue_tt(x, y, t, e)
-        if EToDomain[e] == 1
-            return vinside_tt(x, y, t)
-        elseif EToDomain[e] == 2
-            return voutside_tt(x, y, t)
-        else
-            error("invalid block")
-        end
-    end
-
-    gDfun = ue
-    gDdotfun = ue_t
-    function gNfun(nx, ny, xf, yf, t, e)
-        return nx .* (ue_x(xf, yf, t, e)) + ny .* (ue_y(xf, yf, t, e))
-    end
-
-    #u_rr + (1/r)*u_r + (1/r^2)*u_theta,theta
-    function F(x, y, t, e)
-        r = sqrt.(x .^ 2 + y .^ 2)
-        theta = atan.(y, x)
-        if EToDomain[e] == 1
-            u_r =
-                c .* (
-                    2 .* r .^ 2 .* exp.(-1 .* r .^ 2) .+ 1 .-
-                    exp.(-1 .* r .^ 2)
-                ) .* sin.(theta)
-            u_rr =
-                c .* exp.(-1 .* r .^ 2) .* (6 .* r .- 4 .* r .^ 3) .*
-                sin.(theta)
-            u_thetatheta =
-                -c .* (1 .- exp.(-1 .* r .^ 2)) .* r .* sin.(theta)
-            return ue_tt(x, y, t, e) .-
-                   A *
-                   sin.(t) *
-                   (u_rr .+ (1 ./ r) .* u_r .+ (1 ./ r .^ 2) .* u_thetatheta)
-
-        elseif EToDomain[e] == 2
-            u_thetatheta =
-                -1 .* (r .- 1) .^ 2 .* cos.(theta) .- (r .- 1) .* sin.(theta)
-            u_r = 2 .* (r .- 1) .* cos.(theta) .+ sin.(theta)
-            u_rr = 2 * cos.(theta)
-            return ue_tt(x, y, t, e) .-
-                   A *
-                   sin.(t) *
-                   (u_rr .+ (1 ./ r) .* u_r .+ (1 ./ r .^ 2) .* u_thetatheta)
-        else
-            error("invalid block")
-        end
-    end
-
     function Friction(V)
         return β * asinh(γ * V)
     end
 
-    #=
-    ue = (x, y, t, e) -> sin.(t) .* sin.(π*x .+ π*y)
-    ue_t = (x, y, t, e) -> cos.(t) .* sin.(π*x .+ π*y)
-    ue_tt = (x, y, t, e) -> -sin.(t) .* sin.(π*x .+ π*y)
-    ue_x = (x, y, t, e) ->  π * sin.(t) .* cos.(π*x .+ π*y)
-    ue_y = (x, y, t, e) -> π * sin.(t) .* cos.(π*x .+ π*y)
-    ue_xx = (x, y, t, e) -> -π^2 * sin.(t) .* sin.(π*x .+ π*y)
-    ue_yy = (x, y, t, e) -> -π^2 * sin.(t) .* sin.(π*x .+ π*y)
-    F = (x, y, t, e) -> -sin.(t) .* sin.(π*x .+ π*y) + 2π^2 * sin.(t) .* sin.(π*x .+ π*y)
-
-    =#
+    gDfun(x, y, t, e) = ue(x, y, t, EToDomain[e])
+    gDdotfun(x, y, t, e) = ue_t(x, y, t, EToDomain[e])
+    function gNfun(nx, ny, xf, yf, t, e)
+        dom = EToDomain[e]
+        return nx .* (ue_x(xf, yf, t, dom)) + ny .* (ue_y(xf, yf, t, dom))
+    end
+    body_force(x, y, t, e) = force(x, y, t, EToDomain[e])
 
     for lvl in 1:length(ϵ)
         # Set up the local grid dimensions
@@ -321,7 +289,17 @@ let
         )
 
         OPTYPE = typeof(
-            rhsoperators(rho, p, 12, 12, mets, gDfun, gDdotfun, gNfun, F),
+            rhsoperators(
+                rho,
+                p,
+                12,
+                12,
+                mets,
+                gDfun,
+                gDdotfun,
+                gNfun,
+                body_force,
+            ),
         )
 
         METTYPE = typeof(mets)
@@ -437,7 +415,7 @@ let
                 gDfun,
                 gDdotfun,
                 gNfun,
-                F,
+                body_force,
             )
         end
 
@@ -762,12 +740,13 @@ let
             (xf1, xf2, xf3, xf4) = metrics[e].facecoord[1]
             (yf1, yf2, yf3, yf4) = metrics[e].facecoord[2]
 
-            u0 = ue.(metrics[e].coord[1][:], metrics[e].coord[2][:], 0, e)
-            v0 = ue_t.(metrics[e].coord[1][:], metrics[e].coord[2][:], 0, e)
-            û10 = ue.(xf1[:], yf1[:], 0, e)
-            û20 = ue.(xf2[:], yf2[:], 0, e)
-            û30 = ue.(xf3[:], yf3[:], 0, e)
-            û40 = ue.(xf4[:], yf4[:], 0, e)
+            dom = EToDomain[e]
+            u0 = ue.(metrics[e].coord[1][:], metrics[e].coord[2][:], 0, dom)
+            v0 = ue_t.(metrics[e].coord[1][:], metrics[e].coord[2][:], 0, dom)
+            û10 = ue.(xf1[:], yf1[:], 0, dom)
+            û20 = ue.(xf2[:], yf2[:], 0, dom)
+            û30 = ue.(xf3[:], yf3[:], 0, dom)
+            û40 = ue.(xf4[:], yf4[:], 0, dom)
 
             q[(lenq0 * (e - 1) + 1):(e * lenq0)] =
                 [u0; v0; û10; û20; û30; û40]
@@ -795,42 +774,48 @@ let
             #      rhsops[e].nCB[4]*qe_u + 1*rhsops[e].nCnΓ[4]*qe_û4 - 1*rhsops[e].nCnΓL[4]*qe_u
             #      )
 
+            dom = EToDomain[e]
             qexact_u =
-                ue.(metrics[e].coord[1][:], metrics[e].coord[2][:], tspan[2], e)
+                ue.(
+                    metrics[e].coord[1][:],
+                    metrics[e].coord[2][:],
+                    tspan[2],
+                    dom,
+                )
             qexact_v =
                 ue_t.(
                     metrics[e].coord[1][:],
                     metrics[e].coord[2][:],
                     tspan[2],
-                    e,
+                    dom,
                 )
             qexact_û1 =
                 ue.(
                     metrics[e].facecoord[1][1],
                     metrics[e].facecoord[2][1],
                     tspan[2],
-                    e,
+                    dom,
                 )
             qexact_û2 =
                 ue.(
                     metrics[e].facecoord[1][2],
                     metrics[e].facecoord[2][2],
                     tspan[2],
-                    e,
+                    dom,
                 )
             qexact_û3 =
                 ue.(
                     metrics[e].facecoord[1][3],
                     metrics[e].facecoord[2][3],
                     tspan[2],
-                    e,
+                    dom,
                 )
             qexact_û4 =
                 ue.(
                     metrics[e].facecoord[1][4],
                     metrics[e].facecoord[2][4],
                     tspan[2],
-                    e,
+                    dom,
                 )
 
             #τ̂exact = (rhsops[e].gN(tspan[2], e)[1], rhsops[e].gN(tspan[2], e)[2], rhsops[e].gN(tspan[2], e)[3], rhsops[e].gN(tspan[2], e)[4])
