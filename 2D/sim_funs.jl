@@ -713,25 +713,25 @@ function rhsoperators(
 
     ue_n =
         (t, e) -> (
-            gNfun(nx[1], ny[1], xf1[:], yf1[:], t, e),
-            gNfun(nx[2], ny[2], xf2[:], yf2[:], t, e),
-            gNfun(nx[3], ny[3], xf3[:], yf3[:], t, e),
-            gNfun(nx[4], ny[4], xf4[:], yf4[:], t, e),
+            gNfun.(nx[1], ny[1], xf1[:], yf1[:], t, e),
+            gNfun.(nx[2], ny[2], xf2[:], yf2[:], t, e),
+            gNfun.(nx[3], ny[3], xf3[:], yf3[:], t, e),
+            gNfun.(nx[4], ny[4], xf4[:], yf4[:], t, e),
         )
 
     gD =
         (t, e) -> (
-            gDfun(xf1[:], yf1[:], t, e),
-            gDfun(xf2[:], yf2[:], t, e),
-            gDfun(xf3[:], yf3[:], t, e),
-            gDfun(xf4[:], yf4[:], t, e),
+            gDfun.(xf1[:], yf1[:], t, e),
+            gDfun.(xf2[:], yf2[:], t, e),
+            gDfun.(xf3[:], yf3[:], t, e),
+            gDfun.(xf4[:], yf4[:], t, e),
         )
     gDdot =
         (t, e) -> (
-            gDdotfun(xf1[:], yf1[:], t, e),
-            gDdotfun(xf2[:], yf2[:], t, e),
-            gDdotfun(xf3[:], yf3[:], t, e),
-            gDdotfun(xf4[:], yf4[:], t, e),
+            gDdotfun.(xf1[:], yf1[:], t, e),
+            gDdotfun.(xf2[:], yf2[:], t, e),
+            gDdotfun.(xf3[:], yf3[:], t, e),
+            gDdotfun.(xf4[:], yf4[:], t, e),
         )
 
     sJgDdot =
@@ -753,7 +753,7 @@ function rhsoperators(
     if isnothing(F)
         myF = nothing
     else
-        myF = (t, e) -> F(metrics.coord[1][:], metrics.coord[2][:], t, e)
+        myF = (t, e) -> F.(metrics.coord[1][:], metrics.coord[2][:], t, e)
     end
     (
         Ã = Ã,
