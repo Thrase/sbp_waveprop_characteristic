@@ -1,6 +1,6 @@
 using SparseArrays
 using LinearAlgebra
-#using UnicodePlots
+using UnicodePlots
 using WriteVTK
 using DiagonalSBP
 
@@ -970,7 +970,7 @@ function plot_connectivity(verts, EToV)
     display(plt)
 end
 
-function plot_blocks(lop)
+function plot_blocks(lop, FToB, EToF)
     Lx = (floatmax(), -floatmax())
     Ly = (floatmax(), -floatmax())
     for e in 1:length(lop)
@@ -1004,13 +1004,13 @@ function plot_blocks(lop)
 
     for e in 1:length(lop)
         (xf, yf) = lop[e].facecoord
-        bctype = lop[e].bctype
         for lf in 1:length(xf)
-            if bctype[lf] == BC_LOCKED_INTERFACE
+            bc_type_face = FToB[EToF[lf, e]]
+            if bc_type_face == BC_LOCKED_INTERFACE
                 lineplot!(plt, xf[lf], yf[lf], color = :blue)
-            elseif bctype[lf] == BC_DIRICHLET
+            elseif bc_type_face == BC_DIRICHLET
                 lineplot!(plt, xf[lf], yf[lf], color = :green)
-            elseif bctype[lf] == BC_DIRICHLET
+            elseif bc_type_face == BC_DIRICHLET
                 lineplot!(plt, xf[lf], yf[lf], color = :yellow)
             else
                 lineplot!(plt, xf[lf], yf[lf], color = :red)
