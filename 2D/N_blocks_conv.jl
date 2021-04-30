@@ -80,7 +80,7 @@ let
     Lx = maximum(verts[1, :])
     Ly = maximum(abs.(verts[2, :]))
 
-    function Friction(V)
+    function friction(V)
         return β * asinh(γ * V)
     end
 
@@ -242,322 +242,8 @@ let
             )
         end
 
-        # ODE RHS function
-        function waveprop!(dq, q, p, t)
-
-            # @show t
-
-            @assert length(q) == nelems * (2 * N + 2 * Nqr + 2 * Nqs)
-
-            @inbounds for e in 1:nelems
-                qe = @view q[(lenq0 * (e - 1) + 1):(e * lenq0)]
-                dqe = @view dq[(lenq0 * (e - 1) + 1):(e * lenq0)]
-
-                u = qe[1:N]
-                v = qe[N .+ (1:N)]
-                û1 = qe[(2N + 1):(2N + Nqs)]
-                û2 = qe[(2N + 1 + Nqs):(2(N + Nqs))]
-                û3 = qe[(2(N + Nqs) + 1):(2(N + Nqs) + Nqr)]
-                û4 = qe[(2(N + Nqs) + Nqr + 1):(2(N + Nqs + Nqr))]
-
-                ustar = (û1, û2, û3, û4)
-
-                du = @view dqe[1:N]
-                dv = @view dqe[N .+ (1:N)]
-                dû1 = @view dqe[(2N + 1):(2N + Nqs)]
-                dû2 = @view dqe[(2N + 1 + Nqs):(2(N + Nqs))]
-                dû3 = @view dqe[(2(N + Nqs) + 1):(2(N + Nqs) + Nqr)]
-                dû4 = @view dqe[(2(N + Nqs) + Nqr + 1):(2(N + Nqs + Nqr))]
-
-                #vstar = (dû1, dû2, dû3, dû4)
-
-                τ̂ = (
-                    rhsops[e].nCB[1] * u + rhsops[e].nCnΓ[1] * û1 -
-                    rhsops[e].nCnΓL[1] * u,
-                    rhsops[e].nCB[2] * u + rhsops[e].nCnΓ[2] * û2 -
-                    rhsops[e].nCnΓL[2] * u,
-                    rhsops[e].nCB[3] * u + rhsops[e].nCnΓ[3] * û3 -
-                    rhsops[e].nCnΓL[3] * u,
-                    rhsops[e].nCB[4] * u + rhsops[e].nCnΓ[4] * û4 -
-                    rhsops[e].nCnΓL[4] * u,
-                )
-
-                τ̂star = (
-                    zeros(Float64, Nqs),
-                    zeros(Float64, Nqs),
-                    zeros(Float64, Nqr),
-                    zeros(Float64, Nqr),
-                )
-
-                vstar = (
-                    zeros(Float64, Nqs),
-                    zeros(Float64, Nqs),
-                    zeros(Float64, Nqr),
-                    zeros(Float64, Nqr),
-                )
-
-                glb_fcs = EToF[:, e]  #global faces of element e
-
-                for lf in 1:4
-                    bc_type_face = FToB[glb_fcs[lf]]
-                    if bc_type_face == 1
-                        τ̂star[lf] .= τ̂[lf]
-                        vstar[lf] .= rhsops[e].gDdot(t, e)[lf]
-                        ustar[lf] .= rhsops[e].gD(t, e)[lf]
-
-                    elseif bc_type_face == 2 #Neumann
-                        τ̂star[lf] .= rhsops[e].gN(t, e)[lf]
-                        vstar[lf] .= rhsops[e].L[lf] * v
-                        ustar[lf] .= rhsops[e].L[lf] * u
-
-                    elseif bc_type_face == 7
-                        els_share = FToE[:, glb_fcs[lf]]
-                        lf_share_glb = FToLF[:, glb_fcs[lf]]
-                        cel = [1]
-                        cfc = [1]
-                        for i in 1:2
-                            if els_share[i] != e
-                                cel[1] = els_share[i] # other element face is connected to!
-                            end
-                        end
-
-                        if e < cel[1]
-                            cfc[1] = lf_share_glb[2]
-                        else
-                            cfc[1] = lf_share_glb[1]
-                        end
-
-                        qplus =
-                            @view q[(lenq0 * (cel[1] - 1) + 1):(cel[1] * lenq0)]
-                        uplus = @view qplus[1:N]
-                        vplus = @view qplus[N .+ (1:N)]
-                        û1plus = qplus[(2N + 1):(2N + Nqs)]
-                        û2plus = qplus[(2N + 1 + Nqs):(2(N + Nqs))]
-                        û3plus = qplus[(2(N + Nqs) + 1):(2(N + Nqs) + Nqr)]
-                        û4plus =
-                            qplus[(2(N + Nqs) + Nqr + 1):(2(N + Nqs + Nqr))]
-
-                        ustarplus = (û1plus, û2plus, û3plus, û4plus)
-                        τ̂plus =
-                            rhsops[cel[1]].nCB[cfc[1]] * uplus +
-                            rhsops[cel[1]].nCnΓ[cfc[1]] * ustarplus[cfc[1]] -
-                            rhsops[cel[1]].nCnΓL[cfc[1]] * uplus
-
-                        revrse_e = EToO[lf, e]
-                        revrse_cel = EToO[cfc, cel]
-
-                        vplus_fc = rhsops[cel[1]].L[cfc[1]] * vplus
-                        Zplus = rhsops[cel[1]].Z[cfc[1]]
-
-                        gDdotplus = rhsops[cel[1]].gDdot(t, cel[1])[cfc[1]]
-                        gNplus = rhsops[cel[1]].gN(t, cel[1])[cfc[1]]
-                        sJplus = rhsops[cel[1]].sJ[cfc[1]]
-                        sJminus = rhsops[e].sJ[lf]
-
-                        if EToO[lf, e] != EToO[cfc[1], cel[1]]
-                            τ̂plus_rev = τ̂plus[end:-1:1]
-                            vplus_fc_rev = vplus_fc[end:-1:1] #TODO: could change these and above to avoid defining new arrays
-                            Z_rev = Zplus[end:-1:1, end:-1:1]
-                            gNplus_rev = gNplus[end:-1:1]
-                            gDdotplus_rev = gDdotplus[end:-1:1]
-                            sJplus_rev = sJplus[end:-1:1]
-                        else
-                            τ̂plus_rev = τ̂plus
-                            vplus_fc_rev = vplus_fc
-                            Z_rev = Zplus
-                            gNplus_rev = gNplus
-                            gDdotplus_rev = gDdotplus
-                            sJplus_rev = sJplus
-                        end
-
-                        # Z_refI = spdiagm(0 => 1 ./ diag(Z_rev))
-                        # ZI = rhsops[e].Zinv[lf]
-                        Z = rhsops[e].Z[lf]
-
-                        Vminus = gDdotplus_rev - rhsops[e].gDdot(t, e)[lf]
-                        sJgminus =
-                            rhsops[e].gN(t, e)[lf] -
-                            rhsops[e].sJ[lf] .* Friction.(Vminus)
-                        sJgplus = gNplus_rev - sJplus_rev .* Friction.(-Vminus)
-
-                        #gminus = rhsops[e].Zinv[lf] * sJgminus
-                        #gplus = Z_refI * sJgplus
-
-                        Zvminus = Z * rhsops[e].L[lf] * v
-                        Zvplus = Z_rev * vplus_fc_rev
-
-                        vfric = zeros(Float64, Nqr)
-
-                        for i in 1:Nqr
-                            f(V) =
-                                2 * sJminus[i] * Friction(V) + Z[i, i] * V -
-                                (Zvplus[i] - Zvminus[i]) + τ̂plus_rev[i] -
-                                τ̂[lf][i] - sJgplus[i] + sJgminus[i]
-
-                            Left =
-                                (1 / Z[i, i]) * (
-                                    sJgplus[i] - sJgminus[i] - τ̂plus_rev[i] +
-                                    τ̂[lf][i] +
-                                    Zvplus[i] - Zvminus[i]
-                                )
-
-                            Right = -Left
-
-                            if Left >= Right
-                                tmp = Left
-                                Left = Right
-                                Right = tmp
-                            end
-
-                            v_root = brentdekker(f, Left, Right)#, xatol = 1e-9, xrtol = 1e-9, ftol = 1e-9)
-                            vfric[i] = v_root[1]
-                        end
-
-                        vstar[lf] .=
-                            rhsops[e].L[lf] * v +
-                            rhsops[e].Zinv[lf] * (
-                                -1 * τ̂[lf] +
-                                rhsops[e].sJ[lf] .* Friction.(vfric) +
-                                sJgminus
-                            )
-                        τ̂star[lf] .=
-                            rhsops[e].Z[lf] *
-                            (vstar[lf] - rhsops[e].L[lf] * v) + τ̂[lf]
-
-                    elseif bc_type_face == 8 #interior jump
-                        els_share = FToE[:, glb_fcs[lf]]
-                        lf_share_glb = FToLF[:, glb_fcs[lf]]
-                        cel = [1]
-                        cfc = [1]
-                        for i in 1:2
-                            if els_share[i] != e
-                                cel[1] = els_share[i] # other element face is connected to!
-                            end
-                        end
-
-                        if e < cel[1]
-                            cfc[1] = lf_share_glb[2]
-                        else
-                            cfc[1] = lf_share_glb[1]
-                        end
-
-                        qplus =
-                            @view q[(lenq0 * (cel[1] - 1) + 1):(cel[1] * lenq0)]
-                        uplus = @view qplus[1:N]
-                        vplus = @view qplus[N .+ (1:N)]
-                        û1plus = qplus[(2N + 1):(2N + Nqs)]
-                        û2plus = qplus[(2N + 1 + Nqs):(2(N + Nqs))]
-                        û3plus = qplus[(2(N + Nqs) + 1):(2(N + Nqs) + Nqr)]
-                        û4plus =
-                            qplus[(2(N + Nqs) + Nqr + 1):(2(N + Nqs + Nqr))]
-
-                        ustarplus = (û1plus, û2plus, û3plus, û4plus)
-                        τ̂plus =
-                            rhsops[cel[1]].nCB[cfc[1]] * uplus +
-                            rhsops[cel[1]].nCnΓ[cfc[1]] * ustarplus[cfc[1]] -
-                            rhsops[cel[1]].nCnΓL[cfc[1]] * uplus
-
-                        revrse_e = EToO[lf, e]
-                        revrse_cel = EToO[cfc, cel]
-                        vplus_fc = rhsops[cel[1]].L[cfc[1]] * vplus
-
-                        dataplus_dot = rhsops[cel[1]].gDdot(t, cel[1])[cfc[1]]
-
-                        if EToO[lf, e] != EToO[cfc[1], cel[1]]
-                            τ̂plus_rev = τ̂plus[end:-1:1]
-                            vplus_fc_rev = vplus_fc[end:-1:1] #TODO: could change these and above to avoid defining new arrays
-                            dataplus_dot .= dataplus_dot[end:-1:1]
-                        else
-                            τ̂plus_rev = τ̂plus
-                            vplus_fc_rev = vplus_fc
-                        end
-
-                        τ̂star[lf] .= 0.5 * (τ̂[lf] - τ̂plus_rev)
-                        delta_dot = rhsops[e].gDdot(t, e)[lf] - dataplus_dot
-
-                        if EToS[lf, e] == 1 #on minus side
-                            vstar[lf] .=
-                                0.5 * (rhsops[e].L[lf] * v + vplus_fc_rev) +
-                                0.5 * delta_dot
-                        else
-                            vstar[lf] .=
-                                0.5 * (rhsops[e].L[lf] * v + vplus_fc_rev) +
-                                0.5 * delta_dot
-                        end
-
-                    elseif bc_type_face == 0
-                        els_share = FToE[:, glb_fcs[lf]]
-                        lf_share_glb = FToLF[:, glb_fcs[lf]]
-                        cel = [1]
-                        cfc = [1]
-                        for i in 1:2
-                            if els_share[i] != e
-                                cel[1] = els_share[i] # other element face is connected to!
-                            end
-                        end
-
-                        if e < cel[1]
-                            cfc[1] = lf_share_glb[2]
-                        else
-                            cfc[1] = lf_share_glb[1]
-                        end
-
-                        qplus =
-                            @view q[(lenq0 * (cel[1] - 1) + 1):(cel[1] * lenq0)]
-                        uplus = @view qplus[1:N]
-                        vplus = @view qplus[N .+ (1:N)]
-                        û1plus = qplus[(2N + 1):(2N + Nqs)]
-                        û2plus = qplus[(2N + 1 + Nqs):(2(N + Nqs))]
-                        û3plus = qplus[(2(N + Nqs) + 1):(2(N + Nqs) + Nqr)]
-                        û4plus =
-                            qplus[(2(N + Nqs) + Nqr + 1):(2(N + Nqs + Nqr))]
-
-                        ustarplus = (û1plus, û2plus, û3plus, û4plus)
-                        τ̂plus =
-                            rhsops[cel[1]].nCB[cfc[1]] * uplus +
-                            rhsops[cel[1]].nCnΓ[cfc[1]] * ustarplus[cfc[1]] -
-                            rhsops[cel[1]].nCnΓL[cfc[1]] * uplus
-
-                        revrse_e = EToO[lf, e]
-                        revrse_cel = EToO[cfc, cel]
-                        vplus_fc = rhsops[cel[1]].L[cfc[1]] * vplus
-
-                        if EToO[lf, e] != EToO[cfc[1], cel[1]]#e == 1 || e == 2
-                            τ̂plus_rev = τ̂plus[end:-1:1]
-                            vplus_fc_rev = vplus_fc[end:-1:1]
-                        else
-                            τ̂plus_rev = τ̂plus
-                            vplus_fc_rev = vplus_fc
-                        end
-
-                        τ̂star[lf] .= 0.5 * (τ̂[lf] - τ̂plus_rev)
-                        vstar[lf] .= 0.5 * (rhsops[e].L[lf] * v + vplus_fc_rev)
-                    else
-                        print("illegal bc type")
-                        return
-                    end
-                end
-
-                du .= v
-                dv .= -rhsops[e].Ã * u
-
-                for lf in 1:4
-                    dv .+=
-                        rhsops[e].L[lf]' * rhsops[e].H[lf] * τ̂star[lf] -
-                        rhsops[e].BtnCH[lf] * (ustar[lf] - rhsops[e].L[lf] * u)
-                end
-
-                dv .= rhsops[e].JIHI * dv .+ rhsops[e].F(t, e)
-
-                dû1 .= vstar[1]
-                dû2 .= vstar[2]
-                dû3 .= vstar[3]
-                dû4 .= vstar[4]
-            end
-        end
-
         # initial conditions
-        lenq0 = 2 * N + 2 * Nqr + 2 * Nqs
+        lenq0 = 2 * (N + Nqr + Nqs)
         q = Array{Float64, 1}(undef, nelems * lenq0)
         for e in 1:nelems
             (xf1, xf2, xf3, xf4) = metrics[e].facecoord[1]
@@ -579,7 +265,19 @@ let
         tspan = (T(0), T(1))
         hmin = mapreduce(m -> m.hmin, min, values(metrics))
         dt = 2hmin
-        timestep!(q, waveprop!, nothing, dt, tspan)
+        params = (
+            Nqr = Nqr,
+            Nqs = Nqs,
+            rhsops = rhsops,
+            EToF = EToF,
+            EToO = EToO,
+            EToS = EToS,
+            FToB = FToB,
+            FToE = FToE,
+            FToLF = FToLF,
+            friction = friction,
+        )
+        timestep!(q, waveprop!, params, dt, tspan)
 
         for e in 1:nelems
             qe = @view q[(lenq0 * (e - 1) + 1):(e * lenq0)]
@@ -647,7 +345,6 @@ let
             Mv = rhsops[e].JH
 
             ϵ[lvl] += Δu' * Mv * Δu
-
         end # end compute error at lvl
 
         ϵ[lvl] = sqrt(ϵ[lvl])#/sqrt(ϵ_exact[lvl])
