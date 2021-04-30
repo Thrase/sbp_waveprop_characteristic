@@ -159,7 +159,7 @@ function D1(p, N; xc = (-1, 1))
 
   r = range(xc[1], stop=xc[2], length=N+1)
 
-  (D, HI = HI, H = H, r = r)
+  (D = D, HI = HI, H = H, r = r)
 end
 #}}}
 
@@ -760,8 +760,7 @@ function variable_D2(p, N, B::AbstractArray; xc = (-1, 1))
 
   r = range(xc[1], stop=xc[2], length=N+1)
 
-
-  (D = D, S0 = S0, SN = SN, HI = HI, H = H, r = r)
+  (D = D, S0 = S0, SN = SN, HI = HI, H = H, A = M, r = r)
 end
 #}}}
 
@@ -769,20 +768,23 @@ function D2_remainder_parameters(p)
   if p == 2
     l = 2
     β = 0.363636363
-    α = 1 / 2
+    θ_H = 1 / 2
+    θ_R = 1.0
   elseif p == 4
     l = 4
     β = 0.2505765857
-    α = 17 / 48
+    θ_H = 17 / 48
+    θ_R = 0.5776
   elseif p == 6
     l = 7
     β = 0.1878687080
-    α = 13649 / 43200
+    θ_H = 13649 / 43200
+    θ_R = 0.3697
   else
     error("unknown order")
   end
 
-  (l = l, α=α, β=β)
+  (l = l, θ_H = θ_H, β = β, θ_R = θ_R)
 end
 
 end # module
