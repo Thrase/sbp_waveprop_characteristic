@@ -1542,7 +1542,11 @@ function waveprop!(dq, q, params, t)
                 rhsops[e].BtnCH[lf] * (ustar[lf] - rhsops[e].L[lf] * u)
         end
 
-        dv .= rhsops[e].JIHI * dv .+ rhsops[e].F(t, e)
+        if isnothing(rhsops[e].F)
+          dv .= rhsops[e].JIHI * dv
+        else
+          dv .= rhsops[e].JIHI * dv .+ rhsops[e].F(t, e)
+        end
 
         dû1 .= vstar[1]
         dû2 .= vstar[2]
