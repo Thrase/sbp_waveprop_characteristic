@@ -11,7 +11,7 @@ let
 
     T = Float64
 
-    p = 4
+    sbp_order = 4
 
     rho = 1 # TODO: account for non-unitary rho
 
@@ -129,7 +129,7 @@ let
 
         # Dictionary to store the operators (independent of element/block)
         mets = create_metrics(
-            p,
+            sbp_order,
             11,
             11,
             (r, s) -> (r, ones(size(r)), zeros(size(s))),
@@ -139,7 +139,7 @@ let
         OPTYPE = typeof(
             rhsoperators(
                 rho,
-                p,
+                sbp_order,
                 12,
                 12,
                 mets,
@@ -251,12 +251,12 @@ let
                 s,
             )
 
-            metrics[e] = create_metrics(p, Nqr - 1, Nqs - 1, xt, yt)
+            metrics[e] = create_metrics(sbp_order, Nqr - 1, Nqs - 1, xt, yt)
 
             # Linear operators:
             rhsops[e] = rhsoperators(
                 rho,
-                p,
+                sbp_order,
                 Nqr,
                 Nqs,
                 metrics[e],
