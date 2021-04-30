@@ -1249,17 +1249,31 @@ function waveprop!(dq, q, params, t)
 
     # @show t
 
+    τ̂star = (
+        zeros(Float64, Nqs),
+        zeros(Float64, Nqs),
+        zeros(Float64, Nqr),
+        zeros(Float64, Nqr),
+    )
+
+    vstar = (
+        zeros(Float64, Nqs),
+        zeros(Float64, Nqs),
+        zeros(Float64, Nqr),
+        zeros(Float64, Nqr),
+    )
+
     @assert length(q) == nelems * lenq0
     @inbounds for e in 1:nelems
         qe = @view q[(lenq0 * (e - 1) + 1):(e * lenq0)]
         dqe = @view dq[(lenq0 * (e - 1) + 1):(e * lenq0)]
 
-        u = qe[1:Np]
-        v = qe[Np .+ (1:Np)]
-        û1 = qe[(2Np + 1):(2Np + Nqs)]
-        û2 = qe[(2Np + 1 + Nqs):(2(Np + Nqs))]
-        û3 = qe[(2(Np + Nqs) + 1):(2(Np + Nqs) + Nqr)]
-        û4 = qe[(2(Np + Nqs) + Nqr + 1):(2(Np + Nqs + Nqr))]
+        u = @view qe[1:Np]
+        v = @view qe[Np .+ (1:Np)]
+        û1 = @view qe[(2Np + 1):(2Np + Nqs)]
+        û2 = @view qe[(2Np + 1 + Nqs):(2(Np + Nqs))]
+        û3 = @view qe[(2(Np + Nqs) + 1):(2(Np + Nqs) + Nqr)]
+        û4 = @view qe[(2(Np + Nqs) + Nqr + 1):(2(Np + Nqs + Nqr))]
 
         ustar = (û1, û2, û3, û4)
 
@@ -1281,20 +1295,6 @@ function waveprop!(dq, q, params, t)
             rhsops[e].nCnΓL[3] * u,
             rhsops[e].nCB[4] * u + rhsops[e].nCnΓ[4] * û4 -
             rhsops[e].nCnΓL[4] * u,
-        )
-
-        τ̂star = (
-            zeros(Float64, Nqs),
-            zeros(Float64, Nqs),
-            zeros(Float64, Nqr),
-            zeros(Float64, Nqr),
-        )
-
-        vstar = (
-            zeros(Float64, Nqs),
-            zeros(Float64, Nqs),
-            zeros(Float64, Nqr),
-            zeros(Float64, Nqr),
         )
 
         glb_fcs = EToF[:, e]  #global faces of element e
@@ -1533,11 +1533,12 @@ function waveprop!(dq, q, params, t)
         end
 
         du .= v
-        dv .= -rhsops[e].Ã * u
+        # dv .= -rhsops[e].Ã * u
+        mul!(dv, rhsops[e].Ã, u, -1, 0)
 
         for lf in 1:4
             dv .+=
-                rhsops[e].L[lf]' * rhsops[e].H[lf] * τ̂star[lf] -
+                rhsops[e].L[lf]' * (rhsops[e].H[lf] * τ̂star[lf]) -
                 rhsops[e].BtnCH[lf] * (ustar[lf] - rhsops[e].L[lf] * u)
         end
 
