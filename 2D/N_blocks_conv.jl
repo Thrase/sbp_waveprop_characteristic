@@ -6,14 +6,16 @@ include("sim_funs.jl")
 include("mms.jl")
 
 let
-    γ = 1
-    β = 2
-
-    T = Float64
+    friction(V) = 2asinh(V)
 
     sbp_order = 4
 
-    rho = 1 # TODO: account for non-unitary rho
+    # This is the base mesh size in each dimension on each element.
+    N1 = N0 = 17
+
+    refinement_levels = 3
+
+    rho = 1
 
     # mesh file side set type to actually boundary condition type
     bc_map =
@@ -44,21 +46,13 @@ let
     # Plot the original connectivity before mesh warping
     # plot_connectivity(verts, EToV)
 
-    # This is the base mesh size in each dimension on each element.
-    N1 = N0 = 17
-
-    no_refine = 3
-    ϵ = zeros(no_refine)
-    ϵ_exact = zeros(no_refine)
+    ϵ = zeros(refinement_levels)
+    ϵ_exact = zeros(refinement_levels)
 
     # EToN0 is the base mesh size (e.g., before refinement)
     EToN0 = zeros(Int64, 2, nelems)
     EToN0[1, :] .= N0
     EToN0[2, :] .= N1
-
-    #@assert typeof(EToV) == Array{Int, 2} && size(EToV) == (4, nelems)
-    #@assert typeof(EToF) == Array{Int, 2} && size(EToF) == (4, nelems)
-    #@assert maximum(maximum(EToF)) == nfaces
 
     # Determine secondary arrays
     (FToE, FToLF, EToO, EToS) = connectivityarrays(EToV, EToF)
@@ -79,10 +73,6 @@ let
     # Exact solution
     Lx = maximum(verts[1, :])
     Ly = maximum(abs.(verts[2, :]))
-
-    function friction(V)
-        return β * asinh(γ * V)
-    end
 
     gDfun(x, y, t, e) = ue(x, y, t, EToDomain[e])
     gDdotfun(x, y, t, e) = ue_t(x, y, t, EToDomain[e])
@@ -262,7 +252,7 @@ let
         end
 
         # solve the ODE
-        tspan = (T(0), T(1))
+        tspan = (0.0, 1.0)
         hmin = mapreduce(m -> m.hmin, min, values(metrics))
         dt = 2hmin
         params = (
