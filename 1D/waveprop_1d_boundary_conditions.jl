@@ -49,7 +49,9 @@ function characteristic_operator(p, N, R)
   n¹ = -1
   n² = +1
 
-  Γ = N / DiagonalSBP.D2_remainder_parameters(p).β
+  θ_R = DiagonalSBP.D2_remainder_parameters(p).θ_R
+  θ_H = DiagonalSBP.D2_remainder_parameters(p).θ_H
+  Γ = N * (1 / θ_R + 1 / θ_H)
 
   # Solving the system in first order form with [u; v; ϕ¹; ϕ²]
   Ouu = spzeros(Nq, Nq)
@@ -174,7 +176,7 @@ function make_spectrum_plots(p, N, R)
   ev_NC = h * eigvals(Matrix(NC))
   ev_C  = h * eigvals(Matrix(C))
 
-  ymin, ymax, xmin, xmax = -2.5, 2.5, -2, 1e-10
+  ymin, ymax, xmin, xmax = -2.5, 2.5, -3.35, 1e-1
 
   pts = nothing
   if !all(xmin .< real.(ev_NC) .< xmax)
@@ -182,13 +184,13 @@ function make_spectrum_plots(p, N, R)
     @assert length(pts) == 2
     @assert pts[1] ≈ pts[2]
     @assert abs(imag(pts[1])) < 1e-14
-    ev_NC = [ev_NC[xmin .< real.(ev_NC) .< xmax]; -2.5]
+    ev_NC = [ev_NC[xmin .< real.(ev_NC) .< xmax]; -3.1]
   end
   @assert all(xmin .< real.(ev_C ) .< xmax)
   @assert all(ymin .< imag.(ev_NC) .< ymax)
   @assert all(ymin .< imag.(ev_C ) .< ymax)
 
-  xmin = -3
+  xmin = xmin - 0.2
 
   @pgf a = Axis(
             {
@@ -221,9 +223,9 @@ function make_spectrum_plots(p, N, R)
   if !isnothing(pts)
     @pgf push!(a,
                [@sprintf """
-                \\node[anchor=south] () at (axis cs:-2.5,0){\$%.2e\$};
-                \\node[anchor=west] (source) at (axis cs:-2.5,0){};
-                \\node (destination) at (axis cs:-2.75,0){};
+                \\node[anchor=south] () at (axis cs:-3.1,0){\$%.2e\$};
+                \\node[anchor=west] (source) at (axis cs:-3.1,0){};
+                \\node (destination) at (axis cs:-3.35,0){};
                 \\draw[->](source)--(destination);
                 """ real(pts[1])])
   end
@@ -283,7 +285,7 @@ function compare_eigs(p, N)
   pgfsave("real_eig.pdf", a)
 end
 
-for R in (-0.9, 0, 0.9)
+for R in (-0.99, -0.9, 0, 0.9, 1.0)
   make_spectrum_plots(4, 50, R)
 end
 compare_eigs(4, 50)
