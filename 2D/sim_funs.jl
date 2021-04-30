@@ -1249,22 +1249,22 @@ function waveprop!(dq, q, params, t)
 
     # @show t
 
-    τ̂star = (
-        zeros(Float64, Nqs),
-        zeros(Float64, Nqs),
-        zeros(Float64, Nqr),
-        zeros(Float64, Nqr),
-    )
-
-    vstar = (
-        zeros(Float64, Nqs),
-        zeros(Float64, Nqs),
-        zeros(Float64, Nqr),
-        zeros(Float64, Nqr),
-    )
-
     @assert length(q) == nelems * lenq0
-    @inbounds for e in 1:nelems
+    @inbounds Threads.@threads for e in 1:nelems
+        τ̂star = (
+            zeros(Float64, Nqs),
+            zeros(Float64, Nqs),
+            zeros(Float64, Nqr),
+            zeros(Float64, Nqr),
+        )
+
+        vstar = (
+                zeros(Float64, Nqs),
+                zeros(Float64, Nqs),
+                zeros(Float64, Nqr),
+                zeros(Float64, Nqr),
+            )
+
         qe = @view q[(lenq0 * (e - 1) + 1):(e * lenq0)]
         dqe = @view dq[(lenq0 * (e - 1) + 1):(e * lenq0)]
 
