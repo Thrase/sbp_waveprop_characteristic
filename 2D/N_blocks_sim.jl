@@ -108,13 +108,13 @@ let
     σ2 = 0.005
 
     #Set initial displacement (just function of x and y)
-    vinside(x, y) = begin
+    function vinside(x, y)
         return exp.(-(x .- μ1) .^ 2 ./ σ1 .- (y .- μ2) .^ 2 ./ 2σ2)
     end
-    voutside(x, y) = begin
+    function voutside(x, y)
         return exp.(-(x .- μ1) .^ 2 ./ σ1 .- (y .- μ2) .^ 2 ./ 2σ2)
     end
-    ue(x, y, e) = begin
+    function ue(x, y, e)
         if EToDomain[e] == 1
             return vinside(x, y)
         elseif EToDomain[e] == 2
@@ -125,15 +125,15 @@ let
     end
 
     #Set initial velocity (just function of x and y)
-    vinside_t(x, y) = begin
+    function vinside_t(x, y)
         r = sqrt.(x .^ 2 + y .^ 2)
         return 0 .* x
     end
-    voutside_t(x, y) = begin
+    function voutside_t(x, y)
         r = sqrt.(x .^ 2 + y .^ 2)
         return 0 .* x
     end
-    ue_t(x, y, e) = begin
+    function ue_t(x, y, e)
         if EToDomain[e] == 1
             return vinside_t(x, y)
         elseif EToDomain[e] == 2
@@ -144,21 +144,21 @@ let
     end
 
     #Set dirichlet data at left/right boundaries
-    gDfun(x, y, t, e) = begin
+    function gDfun(x, y, t, e)
         return 0 .* x
     end
 
-    gDdotfun(x, y, t, e) = begin
+    function gDdotfun(x, y, t, e)
         return 0 .* x
     end
 
     #Set neumann data at top/bottom boundaries
-    gNfun(nx, ny, x, y, t, e) = begin
+    function gNfun(nx, ny, x, y, t, e)
         return 0 .* x
     end
 
     # Friction Law at fault interfacd
-    Friction(V) = begin
+    function Friction(V)
         return β * asinh(γ * V)
     end
 
@@ -173,9 +173,13 @@ let
         N = Nqr * Nqs
 
         # Dictionary to store the operators (independent of element/block)
-        xt = (r, s) -> (r, ones(size(r)), zeros(size(s)))
-        yt = (r, s) -> (s, zeros(size(r)), ones(size(s)))
-        mets = create_metrics(p, 11, 11, xt, yt)
+        mets = create_metrics(
+            p,
+            11,
+            11,
+            (r, s) -> (r, ones(size(r)), zeros(size(s))),
+            (r, s) -> (s, zeros(size(r)), ones(size(s))),
+        )
 
         #ddddds
         OPTYPE =

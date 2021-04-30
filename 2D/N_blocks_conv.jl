@@ -107,73 +107,73 @@ let
     c = exp(1) / (1 + exp(1))
     A = 5
 
-    vinside(x, y, t) = begin
+    function vinside(x, y, t)
         r = sqrt.(x .^ 2 + y .^ 2)
         theta = atan.(y, x)
         return A * sin.(t) .* c .* (1 .- exp.(-1 .* r .^ 2)) .* r .* sin.(theta)
     end
 
-    voutside(x, y, t) = begin
+    function voutside(x, y, t)
         r = sqrt.(x .^ 2 + y .^ 2)
         theta = atan.(y, x)
         return A * sin.(t) .*
                ((r .- 1) .^ 2 .* cos.(theta) .+ (r .- 1) .* sin.(theta))
     end
 
-    vinside_t(x, y, t) = begin
+    function vinside_t(x, y, t)
         r = sqrt.(x .^ 2 + y .^ 2)
         theta = atan.(y, x)
         return A * cos.(t) .* c .* (1 .- exp.(-1 .* r .^ 2)) .* r .* sin.(theta)
     end
 
-    vinside_tt(x, y, t) = begin
+    function vinside_tt(x, y, t)
         r = sqrt.(x .^ 2 + y .^ 2)
         theta = atan.(y, x)
         return -A * sin.(t) .* c .* (1 .- exp.(-1 .* r .^ 2)) .* r .*
                sin.(theta)
     end
 
-    voutside_t(x, y, t) = begin
+    function voutside_t(x, y, t)
         r = sqrt.(x .^ 2 + y .^ 2)
         theta = atan.(y, x)
         return A * cos.(t) .*
                ((r .- 1) .^ 2 .* cos.(theta) .+ (r .- 1) .* sin.(theta))
     end
 
-    voutside_tt(x, y, t) = begin
+    function voutside_tt(x, y, t)
         r = sqrt.(x .^ 2 + y .^ 2)
         theta = atan.(y, x)
         return -A * sin.(t) .*
                ((r .- 1) .^ 2 .* cos.(theta) .+ (r .- 1) .* sin.(theta))
     end
 
-    vinside_x(x, y, t) = begin
+    function vinside_x(x, y, t)
         r = sqrt.(x .^ 2 + y .^ 2)
         theta = atan.(y, x)
         dtheta_dx = -1 .* sin.(theta) ./ r
         dr_dx = cos.(theta)
         dv_dr =
-            c * (
-                2 .* r .^ 2 .* exp.(-1 .* r .^ 2) .+ 1 .- exp.(-1 .* r .^ 2)
-            ) .* sin.(theta)
+            c *
+            (2 .* r .^ 2 .* exp.(-1 .* r .^ 2) .+ 1 .- exp.(-1 .* r .^ 2)) .*
+            sin.(theta)
         dv_dtheta = c .* (1 .- exp.(-1 .* r .^ 2)) .* r .* cos.(theta)
         return A * sin.(t) .* (dv_dr .* dr_dx + dv_dtheta .* dtheta_dx)
     end
 
-    vinside_y(x, y, t) = begin
+    function vinside_y(x, y, t)
         r = sqrt.(x .^ 2 + y .^ 2)
         theta = atan.(y, x)
         dtheta_dy = cos.(theta) ./ r
         dr_dy = sin.(theta)
         dv_dr =
-            c * (
-                2 .* r .^ 2 .* exp.(-1 .* r .^ 2) .+ 1 .- exp.(-1 .* r .^ 2)
-            ) .* sin.(theta)
+            c *
+            (2 .* r .^ 2 .* exp.(-1 .* r .^ 2) .+ 1 .- exp.(-1 .* r .^ 2)) .*
+            sin.(theta)
         dv_dtheta = c .* (1 .- exp.(-1 .* r .^ 2)) .* r .* cos.(theta)
         return A * sin.(t) .* (dv_dr .* dr_dy + dv_dtheta .* dtheta_dy)
     end
 
-    voutside_x(x, y, t) = begin
+    function voutside_x(x, y, t)
         r = sqrt.(x .^ 2 + y .^ 2)
         theta = atan.(y, x)
         dtheta_dx = -1 .* sin.(theta) ./ r
@@ -184,7 +184,7 @@ let
         return A * sin.(t) .* (dv_dr .* dr_dx + dv_dtheta .* dtheta_dx)
     end
 
-    voutside_y(x, y, t) = begin
+    function voutside_y(x, y, t)
         r = sqrt.(x .^ 2 + y .^ 2)
         theta = atan.(y, x)
         dtheta_dy = cos.(theta) ./ r
@@ -195,7 +195,7 @@ let
         return A * sin.(t) .* (dv_dr .* dr_dy + dv_dtheta .* dtheta_dy)
     end
 
-    ue(x, y, t, e) = begin
+    function ue(x, y, t, e)
         if EToDomain[e] == 1
             return vinside(x, y, t)
         elseif EToDomain[e] == 2
@@ -205,7 +205,7 @@ let
         end
     end
 
-    ue_x(x, y, t, e) = begin
+    function ue_x(x, y, t, e)
         if EToDomain[e] == 1
             return vinside_x(x, y, t)
         elseif EToDomain[e] == 2
@@ -215,7 +215,7 @@ let
         end
     end
 
-    ue_y(x, y, t, e) = begin
+    function ue_y(x, y, t, e)
         if EToDomain[e] == 1
             return vinside_y(x, y, t)
         elseif EToDomain[e] == 2
@@ -225,7 +225,7 @@ let
         end
     end
 
-    ue_t(x, y, t, e) = begin
+    function ue_t(x, y, t, e)
         if EToDomain[e] == 1
             return vinside_t(x, y, t)
         elseif EToDomain[e] == 2
@@ -235,7 +235,7 @@ let
         end
     end
 
-    ue_tt(x, y, t, e) = begin
+    function ue_tt(x, y, t, e)
         if EToDomain[e] == 1
             return vinside_tt(x, y, t)
         elseif EToDomain[e] == 2
@@ -251,7 +251,8 @@ let
         return nx .* (ue_x(xf, yf, t, e)) + ny .* (ue_y(xf, yf, t, e))
     end
 
-    F(x, y, t, e) = begin #u_rr + (1/r)*u_r + (1/r^2)*u_theta,theta
+    #u_rr + (1/r)*u_r + (1/r^2)*u_theta,theta
+    function F(x, y, t, e)
         r = sqrt.(x .^ 2 + y .^ 2)
         theta = atan.(y, x)
         if EToDomain[e] == 1
@@ -284,7 +285,7 @@ let
         end
     end
 
-    Friction(V) = begin
+    function Friction(V)
         return β * asinh(γ * V)
     end
 
@@ -311,13 +312,14 @@ let
         N = Nqr * Nqs
 
         # Dictionary to store the operators (independent of element/block)
-        xt = (r, s) -> (r, ones(size(r)), zeros(size(s)))
-        yt = (r, s) -> (s, zeros(size(r)), ones(size(s)))
-        mets = create_metrics(p, 11, 11, xt, yt)
+        mets = create_metrics(
+            p,
+            11,
+            11,
+            (r, s) -> (r, ones(size(r)), zeros(size(s))),
+            (r, s) -> (s, zeros(size(r)), ones(size(s))),
+        )
 
-        #rhsoperators(rho, p, 18, 18, mets, Array{Float64, 1}([0, 0, 0, 0]), ue, ue_t, ue_x, ue_y, F)
-
-        #ddddd
         OPTYPE = typeof(
             rhsoperators(rho, p, 12, 12, mets, gDfun, gDdotfun, gNfun, F),
         )
