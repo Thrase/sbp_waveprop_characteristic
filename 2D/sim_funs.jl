@@ -546,7 +546,7 @@ function rhsoperators(
 
     lop = locoperator(p, Nqr - 1, Nqs - 1, metrics)
 
-    N = Nqr * Nqs
+    Np = Nqr * Nqs
     Ã = lop.Ã
 
     # Surface mass matrices
@@ -1243,9 +1243,9 @@ function waveprop!(dq, q, params, t)
     friction = params.friction
 
     nelems = length(rhsops)
-    N = Nqr * Nqs
+    Np = Nqr * Nqs
 
-    lenq0 = 2 * (N + Nqr + Nqs)
+    lenq0 = 2 * (Np + Nqr + Nqs)
 
     # @show t
 
@@ -1254,21 +1254,21 @@ function waveprop!(dq, q, params, t)
         qe = @view q[(lenq0 * (e - 1) + 1):(e * lenq0)]
         dqe = @view dq[(lenq0 * (e - 1) + 1):(e * lenq0)]
 
-        u = qe[1:N]
-        v = qe[N .+ (1:N)]
-        û1 = qe[(2N + 1):(2N + Nqs)]
-        û2 = qe[(2N + 1 + Nqs):(2(N + Nqs))]
-        û3 = qe[(2(N + Nqs) + 1):(2(N + Nqs) + Nqr)]
-        û4 = qe[(2(N + Nqs) + Nqr + 1):(2(N + Nqs + Nqr))]
+        u = qe[1:Np]
+        v = qe[Np .+ (1:Np)]
+        û1 = qe[(2Np + 1):(2Np + Nqs)]
+        û2 = qe[(2Np + 1 + Nqs):(2(Np + Nqs))]
+        û3 = qe[(2(Np + Nqs) + 1):(2(Np + Nqs) + Nqr)]
+        û4 = qe[(2(Np + Nqs) + Nqr + 1):(2(Np + Nqs + Nqr))]
 
         ustar = (û1, û2, û3, û4)
 
-        du = @view dqe[1:N]
-        dv = @view dqe[N .+ (1:N)]
-        dû1 = @view dqe[(2N + 1):(2N + Nqs)]
-        dû2 = @view dqe[(2N + 1 + Nqs):(2(N + Nqs))]
-        dû3 = @view dqe[(2(N + Nqs) + 1):(2(N + Nqs) + Nqr)]
-        dû4 = @view dqe[(2(N + Nqs) + Nqr + 1):(2(N + Nqs + Nqr))]
+        du = @view dqe[1:Np]
+        dv = @view dqe[Np .+ (1:Np)]
+        dû1 = @view dqe[(2Np + 1):(2Np + Nqs)]
+        dû2 = @view dqe[(2Np + 1 + Nqs):(2(Np + Nqs))]
+        dû3 = @view dqe[(2(Np + Nqs) + 1):(2(Np + Nqs) + Nqr)]
+        dû4 = @view dqe[(2(Np + Nqs) + Nqr + 1):(2(Np + Nqs + Nqr))]
 
         #vstar = (dû1, dû2, dû3, dû4)
 
@@ -1329,12 +1329,12 @@ function waveprop!(dq, q, params, t)
                 end
 
                 qplus = @view q[(lenq0 * (cel[1] - 1) + 1):(cel[1] * lenq0)]
-                uplus = @view qplus[1:N]
-                vplus = @view qplus[N .+ (1:N)]
-                û1plus = qplus[(2N + 1):(2N + Nqs)]
-                û2plus = qplus[(2N + 1 + Nqs):(2(N + Nqs))]
-                û3plus = qplus[(2(N + Nqs) + 1):(2(N + Nqs) + Nqr)]
-                û4plus = qplus[(2(N + Nqs) + Nqr + 1):(2(N + Nqs + Nqr))]
+                uplus = @view qplus[1:Np]
+                vplus = @view qplus[Np .+ (1:Np)]
+                û1plus = qplus[(2Np + 1):(2Np + Nqs)]
+                û2plus = qplus[(2Np + 1 + Nqs):(2(Np + Nqs))]
+                û3plus = qplus[(2(Np + Nqs) + 1):(2(Np + Nqs) + Nqr)]
+                û4plus = qplus[(2(Np + Nqs) + Nqr + 1):(2(Np + Nqs + Nqr))]
 
                 ustarplus = (û1plus, û2plus, û3plus, û4plus)
                 τ̂plus =
@@ -1440,12 +1440,12 @@ function waveprop!(dq, q, params, t)
                 end
 
                 qplus = @view q[(lenq0 * (cel[1] - 1) + 1):(cel[1] * lenq0)]
-                uplus = @view qplus[1:N]
-                vplus = @view qplus[N .+ (1:N)]
-                û1plus = qplus[(2N + 1):(2N + Nqs)]
-                û2plus = qplus[(2N + 1 + Nqs):(2(N + Nqs))]
-                û3plus = qplus[(2(N + Nqs) + 1):(2(N + Nqs) + Nqr)]
-                û4plus = qplus[(2(N + Nqs) + Nqr + 1):(2(N + Nqs + Nqr))]
+                uplus = @view qplus[1:Np]
+                vplus = @view qplus[Np .+ (1:Np)]
+                û1plus = qplus[(2Np + 1):(2Np + Nqs)]
+                û2plus = qplus[(2Np + 1 + Nqs):(2(Np + Nqs))]
+                û3plus = qplus[(2(Np + Nqs) + 1):(2(Np + Nqs) + Nqr)]
+                û4plus = qplus[(2(Np + Nqs) + Nqr + 1):(2(Np + Nqs + Nqr))]
 
                 ustarplus = (û1plus, û2plus, û3plus, û4plus)
                 τ̂plus =
@@ -1499,12 +1499,12 @@ function waveprop!(dq, q, params, t)
                 end
 
                 qplus = @view q[(lenq0 * (cel[1] - 1) + 1):(cel[1] * lenq0)]
-                uplus = @view qplus[1:N]
-                vplus = @view qplus[N .+ (1:N)]
-                û1plus = qplus[(2N + 1):(2N + Nqs)]
-                û2plus = qplus[(2N + 1 + Nqs):(2(N + Nqs))]
-                û3plus = qplus[(2(N + Nqs) + 1):(2(N + Nqs) + Nqr)]
-                û4plus = qplus[(2(N + Nqs) + Nqr + 1):(2(N + Nqs + Nqr))]
+                uplus = @view qplus[1:Np]
+                vplus = @view qplus[Np .+ (1:Np)]
+                û1plus = qplus[(2Np + 1):(2Np + Nqs)]
+                û2plus = qplus[(2Np + 1 + Nqs):(2(Np + Nqs))]
+                û3plus = qplus[(2(Np + Nqs) + 1):(2(Np + Nqs) + Nqr)]
+                û4plus = qplus[(2(Np + Nqs) + Nqr + 1):(2(Np + Nqs + Nqr))]
 
                 ustarplus = (û1plus, û2plus, û3plus, û4plus)
                 τ̂plus =

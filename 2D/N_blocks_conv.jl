@@ -100,7 +100,7 @@ let
         Nqr = Nr[1] + 1
         Nqs = Ns[1] + 1
 
-        N = Nqr * Nqs
+        Np = Nqr * Nqs
 
         # Dictionary to store the operators (independent of element/block)
         mets = create_metrics(
@@ -243,7 +243,7 @@ let
         end
 
         # initial conditions
-        lenq0 = 2 * (N + Nqr + Nqs)
+        lenq0 = 2 * Np + 2 * Nqr + 2 * Nqs
         q = Array{Float64, 1}(undef, nelems * lenq0)
         for e in 1:nelems
             (xf1, xf2, xf3, xf4) = metrics[e].facecoord[1]
@@ -282,12 +282,12 @@ let
         for e in 1:nelems
             qe = @view q[(lenq0 * (e - 1) + 1):(e * lenq0)]
 
-            qe_u = qe[1:N]
-            #qe_v = qe[N .+ (1:N)]
-            #qe_û1 = qe[2N+1:2N+Nqs]
-            #qe_û2 = qe[2N+1+Nqs:2(N+Nqs)]
-            #qe_û3 = qe[2(N+Nqs)+1:2(N+Nqs)+Nqr]
-            #qe_û4 = qe[2(N+Nqs)+Nqr+1:2(N+Nqs+Nqr)]
+            qe_u = qe[1:Np]
+            #qe_v = qe[Np .+ (1:Np)]
+            #qe_û1 = qe[2Np+1:2Np+Nqs]
+            #qe_û2 = qe[2Np+1+Nqs:2(Np+Nqs)]
+            #qe_û3 = qe[2(Np+Nqs)+1:2(Np+Nqs)+Nqr]
+            #qe_û4 = qe[2(Np+Nqs)+Nqr+1:2(Np+Nqs+Nqr)]
 
             #τ̂ = (rhsops[e].nCB[1]*qe_u + 1*rhsops[e].nCnΓ[1]*qe_û1 - 1*rhsops[e].nCnΓL[1]*qe_u,
             #      rhsops[e].nCB[2]*qe_u + 1*rhsops[e].nCnΓ[2]*qe_û2 - 1*rhsops[e].nCnΓL[2]*qe_u,

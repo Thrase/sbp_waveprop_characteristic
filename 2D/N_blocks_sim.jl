@@ -170,7 +170,7 @@ let
         Nqr = Nr[1] + 1
         Nqs = Ns[1] + 1
 
-        N = Nqr * Nqs
+        Np = Nqr * Nqs
 
         # Dictionary to store the operators (independent of element/block)
         mets = create_metrics(
@@ -306,27 +306,27 @@ let
 
             #@show t
 
-            @assert length(q) == nelems * (2 * N + 2 * Nqr + 2 * Nqs)
+            @assert length(q) == nelems * (2 * Np + 2 * Nqr + 2 * Nqs)
 
             for e in 1:nelems
                 qe = @view q[(lenq0 * (e - 1) + 1):(e * lenq0)]
                 dqe = @view dq[(lenq0 * (e - 1) + 1):(e * lenq0)]
 
-                u = qe[1:N]
-                v = qe[N .+ (1:N)]
-                û1 = qe[(2N + 1):(2N + Nqs)]
-                û2 = qe[(2N + 1 + Nqs):(2(N + Nqs))]
-                û3 = qe[(2(N + Nqs) + 1):(2(N + Nqs) + Nqr)]
-                û4 = qe[(2(N + Nqs) + Nqr + 1):(2(N + Nqs + Nqr))]
+                u = qe[1:Np]
+                v = qe[Np .+ (1:Np)]
+                û1 = qe[(2Np + 1):(2Np + Nqs)]
+                û2 = qe[(2Np + 1 + Nqs):(2(Np + Nqs))]
+                û3 = qe[(2(Np + Nqs) + 1):(2(Np + Nqs) + Nqr)]
+                û4 = qe[(2(Np + Nqs) + Nqr + 1):(2(Np + Nqs + Nqr))]
 
                 ustar = (û1, û2, û3, û4)
 
-                du = @view dqe[1:N]
-                dv = @view dqe[N .+ (1:N)]
-                dû1 = @view dqe[(2N + 1):(2N + Nqs)]
-                dû2 = @view dqe[(2N + 1 + Nqs):(2(N + Nqs))]
-                dû3 = @view dqe[(2(N + Nqs) + 1):(2(N + Nqs) + Nqr)]
-                dû4 = @view dqe[(2(N + Nqs) + Nqr + 1):(2(N + Nqs + Nqr))]
+                du = @view dqe[1:Np]
+                dv = @view dqe[Np .+ (1:Np)]
+                dû1 = @view dqe[(2Np + 1):(2Np + Nqs)]
+                dû2 = @view dqe[(2Np + 1 + Nqs):(2(Np + Nqs))]
+                dû3 = @view dqe[(2(Np + Nqs) + 1):(2(Np + Nqs) + Nqr)]
+                dû4 = @view dqe[(2(Np + Nqs) + Nqr + 1):(2(Np + Nqs + Nqr))]
 
                 #vstar = (dû1, dû2, dû3, dû4)
 
@@ -388,13 +388,13 @@ let
 
                         qplus =
                             @view q[(lenq0 * (cel[1] - 1) + 1):(cel[1] * lenq0)]
-                        uplus = @view qplus[1:N]
-                        vplus = @view qplus[N .+ (1:N)]
-                        û1plus = qplus[(2N + 1):(2N + Nqs)]
-                        û2plus = qplus[(2N + 1 + Nqs):(2(N + Nqs))]
-                        û3plus = qplus[(2(N + Nqs) + 1):(2(N + Nqs) + Nqr)]
+                        uplus = @view qplus[1:Np]
+                        vplus = @view qplus[Np .+ (1:Np)]
+                        û1plus = qplus[(2Np + 1):(2Np + Nqs)]
+                        û2plus = qplus[(2Np + 1 + Nqs):(2(Np + Nqs))]
+                        û3plus = qplus[(2(Np + Nqs) + 1):(2(Np + Nqs) + Nqr)]
                         û4plus =
-                            qplus[(2(N + Nqs) + Nqr + 1):(2(N + Nqs + Nqr))]
+                            qplus[(2(Np + Nqs) + Nqr + 1):(2(Np + Nqs + Nqr))]
 
                         ustarplus = (û1plus, û2plus, û3plus, û4plus)
                         τ̂plus =
@@ -483,13 +483,13 @@ let
 
                         qplus =
                             @view q[(lenq0 * (cel[1] - 1) + 1):(cel[1] * lenq0)]
-                        uplus = @view qplus[1:N]
-                        vplus = @view qplus[N .+ (1:N)]
-                        û1plus = qplus[(2N + 1):(2N + Nqs)]
-                        û2plus = qplus[(2N + 1 + Nqs):(2(N + Nqs))]
-                        û3plus = qplus[(2(N + Nqs) + 1):(2(N + Nqs) + Nqr)]
+                        uplus = @view qplus[1:Np]
+                        vplus = @view qplus[Np .+ (1:Np)]
+                        û1plus = qplus[(2Np + 1):(2Np + Nqs)]
+                        û2plus = qplus[(2Np + 1 + Nqs):(2(Np + Nqs))]
+                        û3plus = qplus[(2(Np + Nqs) + 1):(2(Np + Nqs) + Nqr)]
                         û4plus =
-                            qplus[(2(N + Nqs) + Nqr + 1):(2(N + Nqs + Nqr))]
+                            qplus[(2(Np + Nqs) + Nqr + 1):(2(Np + Nqs + Nqr))]
 
                         ustarplus = (û1plus, û2plus, û3plus, û4plus)
                         τ̂plus =
@@ -544,13 +544,13 @@ let
 
                         qplus =
                             @view q[(lenq0 * (cel[1] - 1) + 1):(cel[1] * lenq0)]
-                        uplus = @view qplus[1:N]
-                        vplus = @view qplus[N .+ (1:N)]
-                        û1plus = qplus[(2N + 1):(2N + Nqs)]
-                        û2plus = qplus[(2N + 1 + Nqs):(2(N + Nqs))]
-                        û3plus = qplus[(2(N + Nqs) + 1):(2(N + Nqs) + Nqr)]
+                        uplus = @view qplus[1:Np]
+                        vplus = @view qplus[Np .+ (1:Np)]
+                        û1plus = qplus[(2Np + 1):(2Np + Nqs)]
+                        û2plus = qplus[(2Np + 1 + Nqs):(2(Np + Nqs))]
+                        û3plus = qplus[(2(Np + Nqs) + 1):(2(Np + Nqs) + Nqr)]
                         û4plus =
-                            qplus[(2(N + Nqs) + Nqr + 1):(2(N + Nqs + Nqr))]
+                            qplus[(2(Np + Nqs) + Nqr + 1):(2(Np + Nqs + Nqr))]
 
                         ustarplus = (û1plus, û2plus, û3plus, û4plus)
                         τ̂plus =
@@ -597,7 +597,7 @@ let
         end
 
         # initial conditions
-        lenq0 = 2 * N + 2 * Nqr + 2 * Nqs
+        lenq0 = 2 * Np + 2 * Nqr + 2 * Nqs
         q = Array{Float64, 1}(undef, nelems * lenq0)
         for e in 1:nelems
             (xf1, xf2, xf3, xf4) = metrics[e].facecoord[1]
@@ -635,12 +635,12 @@ let
             for e in 1:nelems
                 qe = @view q[(lenq0 * (e - 1) + 1):(e * lenq0)]
 
-                qe_u = qe[1:N]
-                qe_v = qe[N .+ (1:N)]
-                qe_û1 = qe[(2N + 1):(2N + Nqs)]
-                qe_û2 = qe[(2N + 1 + Nqs):(2(N + Nqs))]
-                qe_û3 = qe[(2(N + Nqs) + 1):(2(N + Nqs) + Nqr)]
-                qe_û4 = qe[(2(N + Nqs) + Nqr + 1):(2(N + Nqs + Nqr))]
+                qe_u = qe[1:Np]
+                qe_v = qe[Np .+ (1:Np)]
+                qe_û1 = qe[(2Np + 1):(2Np + Nqs)]
+                qe_û2 = qe[(2Np + 1 + Nqs):(2(Np + Nqs))]
+                qe_û3 = qe[(2(Np + Nqs) + 1):(2(Np + Nqs) + Nqr)]
+                qe_û4 = qe[(2(Np + Nqs) + Nqr + 1):(2(Np + Nqs + Nqr))]
 
                 τ̂ = (
                     rhsops[e].nCB[1] * qe_u + 1 * rhsops[e].nCnΓ[1] * qe_û1 -
