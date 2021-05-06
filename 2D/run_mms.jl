@@ -8,6 +8,7 @@ include("square_circle.jl")
 include("mms.jl")
 
 let
+    # Define the friction law to use
     friction(V) = 2asinh(V)
 
     sbp_order = 4
@@ -17,20 +18,27 @@ let
 
     refinement_levels = 3
 
-    ϵ = zeros(refinement_levels)
-    ϵ_exact = zeros(refinement_levels)
-
+    # The element to domain map is needed here in order to define the boundary
+    # functions (we have a circular argument going on that we need EToDomain to
+    # evaluate the boundary conditions, but we also need the boundary conditions
+    # to build the square_circle operators)
     bc_map =
         [BC_DIRICHLET, BC_DIRICHLET, BC_NEUMANN, BC_NEUMANN, BC_JUMP_INTERFACE]
+
     (_, _, _, _, EToDomain) = read_inp_2d("square_circle.inp"; bc_map = bc_map)
+
+    # Boundary condition function defined from the mms solution
     gDfun(x, y, t, e) = ue(x, y, t, EToDomain[e])
     gDdotfun(x, y, t, e) = ue_t(x, y, t, EToDomain[e])
     function gNfun(nx, ny, xf, yf, t, e)
         dom = EToDomain[e]
         return nx .* (ue_x(xf, yf, t, dom)) + ny .* (ue_y(xf, yf, t, dom))
     end
+
     body_force(x, y, t, e) = force(x, y, t, EToDomain[e])
 
+    # Loop over the levels of refinement
+    ϵ = zeros(refinement_levels)
     for lvl in 1:length(ϵ)
         # Set up the local grid dimensions
         Nr = N0 * (2^(lvl - 1))
@@ -41,6 +49,7 @@ let
 
         Np = Nqr * Nqs
 
+        # Create the operators for the problem
         (metrics, rhsops, EToDomain, EToF, EToO, EToS, FToB, FToE, FToLF) =
             build_square_circle(
                 sbp_order,
@@ -93,6 +102,7 @@ let
         )
         timestep!(q, waveprop!, params, dt, tspan)
 
+        # Loop over the blocks and compute the error in each block
         for e in 1:nelems
             qe = @view q[(lenq0 * (e - 1) + 1):(e * lenq0)]
 
@@ -148,7 +158,7 @@ let
             ϵ[lvl] += Δu' * Mv * Δu
         end # end compute error at lvl
 
-        ϵ[lvl] = sqrt(ϵ[lvl])#/sqrt(ϵ_exact[lvl])
+        ϵ[lvl] = sqrt(ϵ[lvl])
         @show (lvl, ϵ[lvl])
     end #loop over levels
 
