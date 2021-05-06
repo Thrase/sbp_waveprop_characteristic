@@ -14,10 +14,13 @@ let
     # This is the base mesh size in each dimension on each element.
     N0 = 48
 
+    # solver times (output done at each break point)
+    ts = 0:0.1:5
+
     bc_map =
         [BC_DIRICHLET, BC_DIRICHLET, BC_NEUMANN, BC_NEUMANN, BC_JUMP_INTERFACE]
 
-    #Set dirichlet data at left/right boundaries
+    # Set dirichlet data at left/right boundaries
     μ1 = 0.1
     μ2 = 0.2
     σ1 = 0.005
@@ -49,6 +52,7 @@ let
             bc_map,
             true,
         )
+
     nelems = length(rhsops)
 
     # initial conditions
@@ -74,10 +78,9 @@ let
     hmin = mapreduce(m -> m.hmin, min, values(metrics))
     dt = 2hmin
 
-    # solve the ODE
-    ts = 0:0.1:5
     energy = zeros(length(ts))
 
+    # Parameters to pass to the ODE solver
     params = (
               Nqr = Nqr,
               Nqs = Nqs,
@@ -90,11 +93,15 @@ let
               FToLF = FToLF,
               friction = friction,
              )
+
+    # Loop over times and advance simulation (saving at given times before
+    # continuing)
     for step in 1:(length(ts) - 1)
         tspan = (ts[step], ts[step + 1])
         timestep!(q, waveprop!, params, dt, tspan)
         write_vtk(@sprintf("output/N_blocks_sim_step_%04d", step), metrics, q)
 
+        # Loop over blocks are compute the energy in the blocks at this time
         for e in 1:nelems
             qe = @view q[(lenq0 * (e - 1) + 1):(e * lenq0)]
 
