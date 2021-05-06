@@ -145,7 +145,6 @@ function connectivityarrays(EToV, EToF)
     (FToE, FToLF, EToO, EToS)
 end
 
-# locoperator
 function create_metrics(
     pm,
     Nr,
@@ -245,7 +244,6 @@ function locoperator(
     Nr,
     Ns,
     metrics = create_metrics(p, Nr, Ns);
-    τscale = 2,
     crr = metrics.crr,
     css = metrics.css,
     crs = metrics.crs,
