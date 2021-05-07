@@ -7,16 +7,9 @@ include("square_circle.jl")
 
 include("mms.jl")
 
-let
+function main(sbp_order, refinement_levels, N0)
     # Define the friction law to use
     friction(V) = 2asinh(V)
-
-    sbp_order = 4
-
-    # This is the base mesh size in each dimension on each element.
-    N0 = 17
-
-    refinement_levels = 3
 
     # The element to domain map is needed here in order to define the boundary
     # functions (we have a circular argument going on that we need EToDomain to
