@@ -2,13 +2,16 @@ function build_square_circle(
     sbp_order,
     Nqr,
     Nqs,
-    rho,
     gDfun,
     gDdotfun,
     gNfun,
     body_force,
     bc_map,
-    do_output = false,
+    do_output = false;
+    rho = 1,
+    cxx = nothing,
+    cxy = nothing,
+    cyy = nothing,
 )
     @assert Nqr == Nqs
 
@@ -66,7 +69,6 @@ function build_square_circle(
 
     OPTYPE = typeof(
         rhsoperators(
-            rho,
             sbp_order,
             12,
             12,
@@ -74,7 +76,8 @@ function build_square_circle(
             gDfun,
             gDdotfun,
             gNfun,
-            body_force,
+            body_force;
+            rho = rho
         ),
     )
 
@@ -176,9 +179,36 @@ function build_square_circle(
 
         metrics[e] = create_metrics(sbp_order, Nqr - 1, Nqs - 1, xt, yt)
 
+        if isnothing(cxx) && isnothing(cyy) && isnothing(cyy)
+            crr = metrics[e].crr
+            crs = metrics[e].crs
+            css = metrics[e].css
+        else
+            J = metrics[e].J
+            (x, y) = metrics[e].coord
+            rx = metrics[e].rx
+            ry = metrics[e].ry
+            sx = metrics[e].sx
+            sy = metrics[e].sy
+            cxx_ = cxx.(x, y)
+            cyy_ = cyy.(x, y)
+            cyx_ = cxy_ = cxy.(x, y)
+            crr = J .* (rx .* cxx_ .* rx +
+                        rx .* cxy_ .* ry +
+                        ry .* cyx_ .* rx +
+                        ry .* cyy_ .* ry)
+            crs = J .* (rx .* cxx_ .* sx +
+                        rx .* cxy_ .* sy +
+                        ry .* cyx_ .* sx +
+                        ry .* cyy_ .* sy)
+            css = J .* (sx .* cxx_ .* sx +
+                        sx .* cxy_ .* sy +
+                        sy .* cyx_ .* sx +
+                        sy .* cyy_ .* sy)
+        end
+
         # Linear operators:
         rhsops[e] = rhsoperators(
-            rho,
             sbp_order,
             Nqr,
             Nqs,
@@ -186,7 +216,11 @@ function build_square_circle(
             gDfun,
             gDdotfun,
             gNfun,
-            body_force,
+            body_force;
+            rho = rho,
+            crr = crr,
+            crs = crs,
+            css = css,
         )
     end
 

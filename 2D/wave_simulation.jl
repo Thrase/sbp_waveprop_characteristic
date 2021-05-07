@@ -9,13 +9,13 @@ include("square_circle.jl")
 let
     friction(V) = 2asinh(V)
 
-    sbp_order = 2
+    sbp_order = 6
 
     # This is the base mesh size in each dimension on each element.
     N0 = 48
 
     # solver times (output done at each break point)
-    ts = 0:0.1:5
+    ts = 0:0.1:10
 
     bc_map =
         [BC_DIRICHLET, BC_DIRICHLET, BC_NEUMANN, BC_NEUMANN, BC_JUMP_INTERFACE]
@@ -39,18 +39,27 @@ let
 
     Np = Nqr * Nqs
 
+    λ1(x, y) = (1 + sin(x)^2) / 2
+    λ2(x, y) = exp(-(x + y)^2)
+    θ(x, y) = 2 * π * sin(x) * sin(y)
+    cxx(x, y) = cos(θ(x, y))^2 * λ1(x, y) + sin(θ(x, y))^2 * λ2(x,y)
+    cxy(x, y) = cos(θ(x, y)) * sin(θ(x, y)) * (λ2(x,y) - λ1(x,y))
+    cyy(x, y) = sin(θ(x, y))^2 * λ1(x, y) + cos(θ(x, y))^2 * λ2(x, y)
+
     (metrics, rhsops, EToDomain, EToF, EToO, EToS, FToB, FToE, FToLF) =
         build_square_circle(
             sbp_order,
             Nqr,
             Nqs,
-            1,
             gDfun,
             gDdotfun,
             gNfun,
             body_force,
             bc_map,
-            true,
+            true;
+            cxx = cxx,
+            cxy = cxy,
+            cyy = cyy
         )
 
     nelems = length(rhsops)
@@ -73,7 +82,8 @@ let
     end
 
     mkpath("output")
-    write_vtk(@sprintf("output/N_blocks_sim_step_%04d", 0), metrics, q)
+    write_vtk(@sprintf("output/N_blocks_sim_step_%04d", 0), metrics, q;
+              cxx = cxx, cxy = cxy, cyy = cyy)
 
     hmin = mapreduce(m -> m.hmin, min, values(metrics))
     dt = 2hmin
@@ -98,8 +108,10 @@ let
     # continuing)
     for step in 1:(length(ts) - 1)
         tspan = (ts[step], ts[step + 1])
+        @show tspan
         timestep!(q, waveprop!, params, dt, tspan)
-        write_vtk(@sprintf("output/N_blocks_sim_step_%04d", step), metrics, q)
+        write_vtk(@sprintf("output/N_blocks_sim_step_%04d", step), metrics, q;
+              cxx = cxx, cxy = cxy, cyy = cyy)
 
         # Loop over blocks are compute the energy in the blocks at this time
         for e in 1:nelems

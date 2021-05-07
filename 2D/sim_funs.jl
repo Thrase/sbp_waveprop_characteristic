@@ -529,7 +529,6 @@ function locoperator(
 end
 
 function rhsoperators(
-    rho,
     p,
     Nqr,
     Nqs,
@@ -537,12 +536,16 @@ function rhsoperators(
     gDfun,
     gDdotfun,
     gNfun,
-    F = nothing,
+    F = nothing;
+    rho = 1,
+    crr = metrics.crr,
+    css = metrics.css,
+    crs = metrics.crs,
 )
 
     # Build local operators
 
-    lop = locoperator(p, Nqr - 1, Nqs - 1, metrics)
+    lop = locoperator(p, Nqr - 1, Nqs - 1, metrics; crr = crr, css = css, crs = crs)
 
     Np = Nqr * Nqs
     Ã = lop.Ã
@@ -1019,7 +1022,11 @@ function plot_blocks(lop, FToB, EToF)
     display(plt)
 end
 
-function write_vtk(output_file, metrics, q)
+function write_vtk(output_file, metrics, q;
+    cxx = nothing,
+    cyy = nothing,
+    cxy = nothing)
+
     vtk_multiblock(output_file) do vtm
         # How many blocks do we have
         nblocks = length(metrics)
@@ -1045,6 +1052,12 @@ function write_vtk(output_file, metrics, q)
             vtk = vtk_grid(vtm, x, y)
             vtk["u"] = @view q[n .+ (1:Np)]
             vtk["v"] = @view q[(n + Np) .+ (1:Np)]
+
+            if !isnothing(cxx)
+              vtk["cxx"] = cxx.(x, y)
+              vtk["cxy"] = cxy.(x, y)
+              vtk["cyy"] = cyy.(x, y)
+            end
 
             # update the last point of the block
             n += q_len

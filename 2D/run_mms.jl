@@ -55,7 +55,6 @@ let
                 sbp_order,
                 Nqr,
                 Nqs,
-                1,
                 gDfun,
                 gDdotfun,
                 gNfun,
