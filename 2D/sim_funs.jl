@@ -927,7 +927,7 @@ function read_inp_2d(T, S, filename::String; bc_map = 1:10000)
                     bc == BC_DIRICHLET ||
                     bc == BC_NEUMANN ||
                     bc == BC_LOCKED_INTERFACE ||
-                    bc >= BC_JUMP_INTERFACE
+                    abs(bc) >= BC_JUMP_INTERFACE
                 )
             end
         end
@@ -1333,7 +1333,7 @@ function waveprop!(dq, q, params, t)
                 vstar[lf] .= rhsops[e].L[lf] * v
                 ustar[lf] .= rhsops[e].L[lf] * u
 
-            elseif bc_type_face == 7
+            elseif bc_type_face == 7 # Characteristic fault interface
                 els_share = FToE[:, glb_fcs[lf]]
                 lf_share_glb = FToLF[:, glb_fcs[lf]]
                 cel = [1]
@@ -1444,7 +1444,8 @@ function waveprop!(dq, q, params, t)
                 τ̂star[lf] .=
                     rhsops[e].Z[lf] * (vstar[lf] - rhsops[e].L[lf] * v) + τ̂[lf]
 
-            elseif bc_type_face == 8 #interior jump
+            elseif bc_type_face == -7
+
                 els_share = FToE[:, glb_fcs[lf]]
                 lf_share_glb = FToLF[:, glb_fcs[lf]]
                 cel = [1]
@@ -1454,54 +1455,20 @@ function waveprop!(dq, q, params, t)
                         cel[1] = els_share[i] # other element face is connected to!
                     end
                 end
-
-                if e < cel[1]
-                    cfc[1] = lf_share_glb[2]
-                else
-                    cfc[1] = lf_share_glb[1]
-                end
-
+                gDdotplus = rhsops[cel[1]].gDdot(t, cel[1])[cfc[1]]
                 qplus = @view q[(lenq0 * (cel[1] - 1) + 1):(cel[1] * lenq0)]
-                uplus = @view qplus[1:Np]
                 vplus = @view qplus[Np .+ (1:Np)]
-                û1plus = qplus[(2Np + 1):(2Np + Nqs)]
-                û2plus = qplus[(2Np + 1 + Nqs):(2(Np + Nqs))]
-                û3plus = qplus[(2(Np + Nqs) + 1):(2(Np + Nqs) + Nqr)]
-                û4plus = qplus[(2(Np + Nqs) + Nqr + 1):(2(Np + Nqs + Nqr))]
-
-                ustarplus = (û1plus, û2plus, û3plus, û4plus)
-                τ̂plus =
-                    rhsops[cel[1]].nCB[cfc[1]] * uplus +
-                    rhsops[cel[1]].nCnΓ[cfc[1]] * ustarplus[cfc[1]] -
-                    rhsops[cel[1]].nCnΓL[cfc[1]] * uplus
-
-                revrse_e = EToO[lf, e]
-                revrse_cel = EToO[cfc, cel]
-                vplus_fc = rhsops[cel[1]].L[cfc[1]] * vplus
-
-                dataplus_dot = rhsops[cel[1]].gDdot(t, cel[1])[cfc[1]]
-
+                vplus = rhsops[cel[1]].L[cfc[1]] * vplus
                 if EToO[lf, e] != EToO[cfc[1], cel[1]]
-                    τ̂plus_rev = τ̂plus[end:-1:1]
-                    vplus_fc_rev = vplus_fc[end:-1:1] #TODO: could change these and above to avoid defining new arrays
-                    dataplus_dot .= dataplus_dot[end:-1:1]
-                else
-                    τ̂plus_rev = τ̂plus
-                    vplus_fc_rev = vplus_fc
+                  gDdotplus .= gDdotplus[end:-1:1]
+                  vplus .= vplus[end:-1:1]
                 end
-
-                τ̂star[lf] .= 0.5 * (τ̂[lf] - τ̂plus_rev)
-                delta_dot = rhsops[e].gDdot(t, e)[lf] - dataplus_dot
-
-                if EToS[lf, e] == 1 #on minus side
-                    vstar[lf] .=
-                        0.5 * (rhsops[e].L[lf] * v + vplus_fc_rev) +
-                        0.5 * delta_dot
-                else
-                    vstar[lf] .=
-                        0.5 * (rhsops[e].L[lf] * v + vplus_fc_rev) +
-                        0.5 * delta_dot
-                end
+                Vdisc = vplus - rhsops[e].L[lf] * v
+                Vexact = gDdotplus - rhsops[e].gDdot(t, e)[lf]
+                τ̂star[lf] .=
+                rhsops[e].gN(t, e)[lf] - rhsops[e].sJ[lf] .* (friction.(Vexact) - friction.(Vdisc))
+                vstar[lf] .= rhsops[e].L[lf] * v
+                ustar[lf] .= rhsops[e].L[lf] * u
 
             elseif bc_type_face == 0
                 els_share = FToE[:, glb_fcs[lf]]

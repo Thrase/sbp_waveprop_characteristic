@@ -119,13 +119,13 @@ function build_square_circle(
         ]
 
         # For blocks on the circle, put in the curved edge transform
-        if FToB[EToF[1, e]] == BC_JUMP_INTERFACE
+        if abs(FToB[EToF[1, e]]) == BC_JUMP_INTERFACE
             error("curved face 1 not implemented yet")
         end
-        if FToB[EToF[2, e]] == BC_JUMP_INTERFACE
+        if abs(FToB[EToF[2, e]]) == BC_JUMP_INTERFACE
             error("curved face 2 not implemented yet")
         end
-        if FToB[EToF[3, e]] == BC_JUMP_INTERFACE
+        if abs(FToB[EToF[3, e]]) == BC_JUMP_INTERFACE
             Q1 = atan(y1, x1)
             Q2 = atan(y2, x2)
             if !(-π / 2 < Q1 - Q2 < π / 2)
@@ -137,7 +137,7 @@ function build_square_circle(
             exα[3] = (α) -> -β3 .* sin.(Q1 * (1 .- α) / 2 + Q2 * (1 .+ α) / 2)
             eyα[3] = (α) -> +β3 .* cos.(Q1 * (1 .- α) / 2 + Q2 * (1 .+ α) / 2)
         end
-        if FToB[EToF[4, e]] == BC_JUMP_INTERFACE
+        if abs(FToB[EToF[4, e]]) == BC_JUMP_INTERFACE
             Q3 = atan(y3, x3)
             Q4 = atan(y4, x4)
             if !(-π / 2 < Q3 - Q4 < π / 2)
@@ -233,7 +233,7 @@ function build_square_circle(
         )
     end
 
-    do_output && plot_blocks(metrics, FToB, EToF)
+    do_output && plot_blocks(metrics, abs.(FToB), EToF)
 
     return (
         metrics = metrics,
