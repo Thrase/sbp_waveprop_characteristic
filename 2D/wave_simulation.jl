@@ -42,8 +42,8 @@ let
     λ1(x, y) = (1 + sin(x)^2) / 2
     λ2(x, y) = exp(-(x + y)^2)
     θ(x, y) = 2 * π * sin(x) * sin(y)
-    cxx(x, y) = cos(θ(x, y))^2 * λ1(x, y) + sin(θ(x, y))^2 * λ2(x,y)
-    cxy(x, y) = cos(θ(x, y)) * sin(θ(x, y)) * (λ2(x,y) - λ1(x,y))
+    cxx(x, y) = cos(θ(x, y))^2 * λ1(x, y) + sin(θ(x, y))^2 * λ2(x, y)
+    cxy(x, y) = cos(θ(x, y)) * sin(θ(x, y)) * (λ2(x, y) - λ1(x, y))
     cyy(x, y) = sin(θ(x, y))^2 * λ1(x, y) + cos(θ(x, y))^2 * λ2(x, y)
 
     (metrics, rhsops, EToDomain, EToF, EToO, EToS, FToB, FToE, FToLF) =
@@ -59,7 +59,7 @@ let
             true;
             cxx = cxx,
             cxy = cxy,
-            cyy = cyy
+            cyy = cyy,
         )
 
     nelems = length(rhsops)
@@ -82,8 +82,14 @@ let
     end
 
     mkpath("output")
-    write_vtk(@sprintf("output/N_blocks_sim_step_%04d", 0), metrics, q;
-              cxx = cxx, cxy = cxy, cyy = cyy)
+    write_vtk(
+        @sprintf("output/N_blocks_sim_step_%04d", 0),
+        metrics,
+        q;
+        cxx = cxx,
+        cxy = cxy,
+        cyy = cyy,
+    )
 
     hmin = mapreduce(m -> m.hmin, min, values(metrics))
     dt = 2hmin
@@ -92,17 +98,17 @@ let
 
     # Parameters to pass to the ODE solver
     params = (
-              Nqr = Nqr,
-              Nqs = Nqs,
-              rhsops = rhsops,
-              EToF = EToF,
-              EToO = EToO,
-              EToS = EToS,
-              FToB = FToB,
-              FToE = FToE,
-              FToLF = FToLF,
-              friction = friction,
-             )
+        Nqr = Nqr,
+        Nqs = Nqs,
+        rhsops = rhsops,
+        EToF = EToF,
+        EToO = EToO,
+        EToS = EToS,
+        FToB = FToB,
+        FToE = FToE,
+        FToLF = FToLF,
+        friction = friction,
+    )
 
     # Loop over times and advance simulation (saving at given times before
     # continuing)
@@ -110,8 +116,14 @@ let
         tspan = (ts[step], ts[step + 1])
         @show tspan
         timestep!(q, waveprop!, params, dt, tspan)
-        write_vtk(@sprintf("output/N_blocks_sim_step_%04d", step), metrics, q;
-              cxx = cxx, cxy = cxy, cyy = cyy)
+        write_vtk(
+            @sprintf("output/N_blocks_sim_step_%04d", step),
+            metrics,
+            q;
+            cxx = cxx,
+            cxy = cxy,
+            cyy = cyy,
+        )
 
         # Loop over blocks are compute the energy in the blocks at this time
         for e in 1:nelems

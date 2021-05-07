@@ -77,7 +77,7 @@ function build_square_circle(
             gDdotfun,
             gNfun,
             body_force;
-            rho = rho
+            rho = rho,
         ),
     )
 
@@ -193,18 +193,27 @@ function build_square_circle(
             cxx_ = cxx.(x, y)
             cyy_ = cyy.(x, y)
             cyx_ = cxy_ = cxy.(x, y)
-            crr = J .* (rx .* cxx_ .* rx +
-                        rx .* cxy_ .* ry +
-                        ry .* cyx_ .* rx +
-                        ry .* cyy_ .* ry)
-            crs = J .* (rx .* cxx_ .* sx +
-                        rx .* cxy_ .* sy +
-                        ry .* cyx_ .* sx +
-                        ry .* cyy_ .* sy)
-            css = J .* (sx .* cxx_ .* sx +
-                        sx .* cxy_ .* sy +
-                        sy .* cyx_ .* sx +
-                        sy .* cyy_ .* sy)
+            crr =
+                J .* (
+                    rx .* cxx_ .* rx +
+                    rx .* cxy_ .* ry +
+                    ry .* cyx_ .* rx +
+                    ry .* cyy_ .* ry
+                )
+            crs =
+                J .* (
+                    rx .* cxx_ .* sx +
+                    rx .* cxy_ .* sy +
+                    ry .* cyx_ .* sx +
+                    ry .* cyy_ .* sy
+                )
+            css =
+                J .* (
+                    sx .* cxx_ .* sx +
+                    sx .* cxy_ .* sy +
+                    sy .* cyx_ .* sx +
+                    sy .* cyy_ .* sy
+                )
         end
 
         # Linear operators:
