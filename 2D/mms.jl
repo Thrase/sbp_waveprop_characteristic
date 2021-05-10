@@ -104,7 +104,7 @@ function ue(x, y, t, dom, A1 = 5 * exp(1) / (1 + exp(1)), A2 = 5)
     end
 end
 
-function ue_x(x, y, t, dom, A1 = 5 * exp(1) / (1 + exp(1)), A2 = 5)
+function ∂x_ue(x, y, t, dom, A1 = 5 * exp(1) / (1 + exp(1)), A2 = 5)
     if dom == 1
         return A1 * vinside_x(x, y, t)
     elseif dom == 2
@@ -114,7 +114,7 @@ function ue_x(x, y, t, dom, A1 = 5 * exp(1) / (1 + exp(1)), A2 = 5)
     end
 end
 
-function ue_y(x, y, t, dom, A1 = 5 * exp(1) / (1 + exp(1)), A2 = 5)
+function ∂y_ue(x, y, t, dom, A1 = 5 * exp(1) / (1 + exp(1)), A2 = 5)
     if dom == 1
         return A1 * vinside_y(x, y, t)
     elseif dom == 2
@@ -124,7 +124,7 @@ function ue_y(x, y, t, dom, A1 = 5 * exp(1) / (1 + exp(1)), A2 = 5)
     end
 end
 
-function ue_t(x, y, t, dom, A1 = 5 * exp(1) / (1 + exp(1)), A2 = 5)
+function ∂t_ue(x, y, t, dom, A1 = 5 * exp(1) / (1 + exp(1)), A2 = 5)
     if dom == 1
         return A1 * vinside_t(x, y, t)
     elseif dom == 2

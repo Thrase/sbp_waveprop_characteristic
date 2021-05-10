@@ -7,7 +7,12 @@ include("square_circle.jl")
 
 include("mms.jl")
 
-function main(sbp_order, refinement_levels, N0)
+function main(
+    sbp_order,
+    refinement_levels,
+    N0,
+    cfl = 2,
+)
     # Define the friction law to use
     friction(V) = 2asinh(V)
 
@@ -22,10 +27,10 @@ function main(sbp_order, refinement_levels, N0)
 
     # Boundary condition function defined from the mms solution
     gDfun(x, y, t, e) = ue(x, y, t, EToDomain[e])
-    gDdotfun(x, y, t, e) = ue_t(x, y, t, EToDomain[e])
+    gDdotfun(x, y, t, e) = ∂t_ue(x, y, t, EToDomain[e])
     function gNfun(nx, ny, xf, yf, t, e)
         dom = EToDomain[e]
-        return nx .* (ue_x(xf, yf, t, dom)) + ny .* (ue_y(xf, yf, t, dom))
+        return nx .* (∂x_ue(xf, yf, t, dom)) + ny .* (∂y_ue(xf, yf, t, dom))
     end
 
     body_force(x, y, t, e) = force(x, y, t, EToDomain[e])
@@ -66,7 +71,7 @@ function main(sbp_order, refinement_levels, N0)
 
             dom = EToDomain[e]
             u0 = ue.(metrics[e].coord[1][:], metrics[e].coord[2][:], 0, dom)
-            v0 = ue_t.(metrics[e].coord[1][:], metrics[e].coord[2][:], 0, dom)
+            v0 = ∂t_ue.(metrics[e].coord[1][:], metrics[e].coord[2][:], 0, dom)
             û10 = ue.(xf1[:], yf1[:], 0, dom)
             û20 = ue.(xf2[:], yf2[:], 0, dom)
             û30 = ue.(xf3[:], yf3[:], 0, dom)
@@ -79,7 +84,8 @@ function main(sbp_order, refinement_levels, N0)
         # solve the ODE
         tspan = (0.0, 1.0)
         hmin = mapreduce(m -> m.hmin, min, values(metrics))
-        dt = 2hmin
+        dt = cfl * hmin
+        @show dt
         params = (
             Nqr = Nqr,
             Nqs = Nqs,
@@ -109,7 +115,7 @@ function main(sbp_order, refinement_levels, N0)
                     dom,
                 )
             qexact_v =
-                ue_t.(
+                ∂t_ue.(
                     metrics[e].coord[1][:],
                     metrics[e].coord[2][:],
                     tspan[2],
