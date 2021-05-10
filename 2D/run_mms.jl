@@ -20,8 +20,15 @@ function main(
     # functions (we have a circular argument going on that we need EToDomain to
     # evaluate the boundary conditions, but we also need the boundary conditions
     # to build the square_circle operators)
-    bc_map =
-        [BC_DIRICHLET, BC_DIRICHLET, BC_NEUMANN, BC_NEUMANN, BC_JUMP_INTERFACE]
+    bc_map = [
+        BC_DIRICHLET,
+        BC_DIRICHLET,
+        BC_NEUMANN,
+        BC_NEUMANN,
+        BC_JUMP_INTERFACE,
+    ]
+    @show bc_map
+    @show [BC_DIRICHLET, BC_NEUMANN, BC_JUMP_INTERFACE]
 
     (_, _, _, _, EToDomain) = read_inp_2d("square_circle.inp"; bc_map = bc_map)
 
