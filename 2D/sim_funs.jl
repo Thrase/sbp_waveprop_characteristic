@@ -1128,8 +1128,6 @@ function timestep!(q, f!, p, dt, (t0, t1), Δq = similar(q), Δq2 = similar(q))
     fill!(Δq2, 0)
     for step in 1:nstep
         t = t0 + (step - 1) * dt
-        if mod(nstep, 100) == 0
-        end
         for s in 1:length(RKA)
             f!(Δq2, q, p, t + RKC[s] * dt)
             Δq .+= Δq2
