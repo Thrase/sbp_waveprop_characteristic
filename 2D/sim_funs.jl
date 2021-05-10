@@ -1321,17 +1321,17 @@ function waveprop!(dq, q, params, t)
 
         for lf in 1:4
             bc_type_face = FToB[glb_fcs[lf]]
-            if bc_type_face == 1
+            if bc_type_face == BC_DIRICHLET
                 τ̂star[lf] .= τ̂[lf]
                 vstar[lf] .= rhsops[e].gDdot(t, e)[lf]
                 ustar[lf] .= rhsops[e].gD(t, e)[lf]
 
-            elseif bc_type_face == 2 #Neumann
+            elseif bc_type_face == BC_NEUMANN
                 τ̂star[lf] .= rhsops[e].gN(t, e)[lf]
                 vstar[lf] .= rhsops[e].L[lf] * v
                 ustar[lf] .= rhsops[e].L[lf] * u
 
-            elseif bc_type_face == 7 # Characteristic fault interface
+            elseif bc_type_face == BC_JUMP_INTERFACE
                 els_share = FToE[:, glb_fcs[lf]]
                 lf_share_glb = FToLF[:, glb_fcs[lf]]
                 cel = [1]
@@ -1442,7 +1442,7 @@ function waveprop!(dq, q, params, t)
                 τ̂star[lf] .=
                     rhsops[e].Z[lf] * (vstar[lf] - rhsops[e].L[lf] * v) + τ̂[lf]
 
-            elseif bc_type_face == -7
+            elseif bc_type_face == -BC_JUMP_INTERFACE
 
                 els_share = FToE[:, glb_fcs[lf]]
                 lf_share_glb = FToLF[:, glb_fcs[lf]]
@@ -1468,7 +1468,7 @@ function waveprop!(dq, q, params, t)
                 vstar[lf] .= rhsops[e].L[lf] * v
                 ustar[lf] .= rhsops[e].L[lf] * u
 
-            elseif bc_type_face == 0
+            elseif bc_type_face == BC_LOCKED_INTERFACE
                 els_share = FToE[:, glb_fcs[lf]]
                 lf_share_glb = FToLF[:, glb_fcs[lf]]
                 cel = [1]
