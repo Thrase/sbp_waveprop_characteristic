@@ -1324,12 +1324,10 @@ function waveprop!(dq, q, params, t)
             if bc_type_face == BC_DIRICHLET
                 τ̂star[lf] .= τ̂[lf]
                 vstar[lf] .= rhsops[e].gDdot(t, e)[lf]
-                ustar[lf] .= rhsops[e].gD(t, e)[lf]
 
             elseif bc_type_face == BC_NEUMANN
                 τ̂star[lf] .= rhsops[e].gN(t, e)[lf]
                 vstar[lf] .= rhsops[e].L[lf] * v
-                ustar[lf] .= rhsops[e].L[lf] * u
 
             elseif bc_type_face == BC_JUMP_INTERFACE
                 els_share = FToE[:, glb_fcs[lf]]
@@ -1466,7 +1464,6 @@ function waveprop!(dq, q, params, t)
                 τ̂star[lf] .=
                 rhsops[e].gN(t, e)[lf] - rhsops[e].sJ[lf] .* (friction.(Vexact) - friction.(Vdisc))
                 vstar[lf] .= rhsops[e].L[lf] * v
-                ustar[lf] .= rhsops[e].L[lf] * u
 
             elseif bc_type_face == BC_LOCKED_INTERFACE
                 els_share = FToE[:, glb_fcs[lf]]
