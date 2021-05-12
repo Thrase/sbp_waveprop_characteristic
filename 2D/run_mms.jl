@@ -8,13 +8,13 @@ include("square_circle.jl")
 
 # Define the mms solution
 function ue(x, y, t, dom, A1 = 5 * exp(1) / (1 + exp(1)), A2 = 5)
-  r = hypot(x, y)
-  θ = atan(y, x)
-  if dom == 1
-    return A1 * sin(t) * (1 - exp(-1 * r^2)) * r * sin(θ)
-  else
-    return A2 * sin(t) * ((r - 1)^2 * cos(θ) + (r - 1) * sin(θ))
-  end
+    r = hypot(x, y)
+    θ = atan(y, x)
+    if dom == 1
+        return A1 * sin(t) * (1 - exp(-1 * r^2)) * r * sin(θ)
+    else
+        return A2 * sin(t) * ((r - 1)^2 * cos(θ) + (r - 1) * sin(θ))
+    end
 end
 
 ∂t_ue(x, y, t, dom) = derivative(t -> ue(x, y, t, dom), t)
@@ -39,7 +39,7 @@ function main(
     cfl = 2,
     friction = (V) -> asinh(V),
     tspan = (0.0, 1),
-    do_output = true
+    do_output = true,
 )
     # Define the friction law to use
 
@@ -55,8 +55,8 @@ function main(
         characteristic_method ? BC_JUMP_INTERFACE : -BC_JUMP_INTERFACE,
     ]
     if do_output
-      @show bc_map
-      @show [BC_DIRICHLET, BC_NEUMANN, BC_JUMP_INTERFACE]
+        @show bc_map
+        @show [BC_DIRICHLET, BC_NEUMANN, BC_JUMP_INTERFACE]
     end
 
     (_, _, _, _, EToDomain) = read_inp_2d("square_circle.inp"; bc_map = bc_map)
@@ -121,7 +121,7 @@ function main(
         hmin = mapreduce(m -> m.hmin, min, values(metrics))
         dt = cfl * hmin
         if do_output
-          @show dt
+            @show dt
         end
         params = (
             Nqr = Nqr,
@@ -195,12 +195,12 @@ function main(
 
         ϵ[lvl] = sqrt(ϵ[lvl])
         if do_output
-          @show (lvl, ϵ[lvl])
-          if lvl > 1
-            rate = (log.(ϵ[lvl-1]) - log.(ϵ[lvl])) / log(2)
-            @show rate
-          end
-          println()
+            @show (lvl, ϵ[lvl])
+            if lvl > 1
+                rate = (log.(ϵ[lvl - 1]) - log.(ϵ[lvl])) / log(2)
+                @show rate
+            end
+            println()
         end
     end #loop over levels
     return ϵ

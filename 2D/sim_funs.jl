@@ -1441,7 +1441,6 @@ function waveprop!(dq, q, params, t)
                     rhsops[e].Z[lf] * (vstar[lf] - rhsops[e].L[lf] * v) + τ̂[lf]
 
             elseif bc_type_face == -BC_JUMP_INTERFACE
-
                 els_share = FToE[:, glb_fcs[lf]]
                 lf_share_glb = FToLF[:, glb_fcs[lf]]
                 cel = [1]
@@ -1456,13 +1455,14 @@ function waveprop!(dq, q, params, t)
                 vplus = @view qplus[Np .+ (1:Np)]
                 vplus = rhsops[cel[1]].L[cfc[1]] * vplus
                 if EToO[lf, e] != EToO[cfc[1], cel[1]]
-                  gDdotplus .= gDdotplus[end:-1:1]
-                  vplus .= vplus[end:-1:1]
+                    gDdotplus .= gDdotplus[end:-1:1]
+                    vplus .= vplus[end:-1:1]
                 end
                 Vdisc = vplus - rhsops[e].L[lf] * v
                 Vexact = gDdotplus - rhsops[e].gDdot(t, e)[lf]
                 τ̂star[lf] .=
-                rhsops[e].gN(t, e)[lf] - rhsops[e].sJ[lf] .* (friction.(Vexact) - friction.(Vdisc))
+                    rhsops[e].gN(t, e)[lf] -
+                    rhsops[e].sJ[lf] .* (friction.(Vexact) - friction.(Vdisc))
                 vstar[lf] .= rhsops[e].L[lf] * v
 
             elseif bc_type_face == BC_LOCKED_INTERFACE
