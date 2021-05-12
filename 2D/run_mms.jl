@@ -35,6 +35,7 @@ function main(
     sbp_order,
     refinement_levels,
     N0,
+    characteristic_method = true,
     cfl = 2,
 )
     # Define the friction law to use
@@ -49,7 +50,7 @@ function main(
         BC_DIRICHLET,
         BC_NEUMANN,
         BC_NEUMANN,
-        BC_JUMP_INTERFACE,
+        characteristic_method ? BC_JUMP_INTERFACE : -BC_JUMP_INTERFACE,
     ]
     @show bc_map
     @show [BC_DIRICHLET, BC_NEUMANN, BC_JUMP_INTERFACE]
