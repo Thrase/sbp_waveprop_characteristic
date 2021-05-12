@@ -38,7 +38,7 @@ function main(
     cfl = 2,
 )
     # Define the friction law to use
-    friction(V) = 2asinh(V)
+    friction(V) = 200asinh(V)
 
     # The element to domain map is needed here in order to define the boundary
     # functions (we have a circular argument going on that we need EToDomain to
