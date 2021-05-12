@@ -34,12 +34,14 @@ end
 function main(
     sbp_order,
     refinement_levels,
-    N0,
+    N0;
     characteristic_method = true,
     cfl = 2,
+    friction = (V) -> asinh(V),
+    tspan = (0.0, 1),
+    do_output = true
 )
     # Define the friction law to use
-    friction(V) = 200asinh(V)
 
     # The element to domain map is needed here in order to define the boundary
     # functions (we have a circular argument going on that we need EToDomain to
@@ -52,8 +54,10 @@ function main(
         BC_NEUMANN,
         characteristic_method ? BC_JUMP_INTERFACE : -BC_JUMP_INTERFACE,
     ]
-    @show bc_map
-    @show [BC_DIRICHLET, BC_NEUMANN, BC_JUMP_INTERFACE]
+    if do_output
+      @show bc_map
+      @show [BC_DIRICHLET, BC_NEUMANN, BC_JUMP_INTERFACE]
+    end
 
     (_, _, _, _, EToDomain) = read_inp_2d("square_circle.inp"; bc_map = bc_map)
 
@@ -90,7 +94,7 @@ function main(
                 gNfun,
                 body_force,
                 bc_map,
-                lvl == 1,
+                (lvl == 1) && do_output,
             )
         nelems = length(rhsops)
 
@@ -114,10 +118,11 @@ function main(
         end
 
         # solve the ODE
-        tspan = (0.0, 1.0)
         hmin = mapreduce(m -> m.hmin, min, values(metrics))
         dt = cfl * hmin
-        @show dt
+        if do_output
+          @show dt
+        end
         params = (
             Nqr = Nqr,
             Nqs = Nqs,
@@ -189,8 +194,14 @@ function main(
         end # end compute error at lvl
 
         ϵ[lvl] = sqrt(ϵ[lvl])
-        @show (lvl, ϵ[lvl])
+        if do_output
+          @show (lvl, ϵ[lvl])
+          if lvl > 1
+            rate = (log.(ϵ[lvl-1]) - log.(ϵ[lvl])) / log(2)
+            @show rate
+          end
+          println()
+        end
     end #loop over levels
-
-    println((log.(ϵ[1:(end - 1)]) - log.(ϵ[2:end])) / log(2))
+    return ϵ
 end
