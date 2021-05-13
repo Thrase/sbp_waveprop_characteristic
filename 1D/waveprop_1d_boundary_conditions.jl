@@ -4,6 +4,7 @@ using LinearAlgebra: I, eigvals
 using Logging: @info
 using Printf: @sprintf
 using PGFPlotsX: @pgf, Plot, Axis, Table, pgfsave, SemiLogYAxis
+using ForwardDiff: derivative
 
 function noncharacteristic_operator(p, N, R)
   # Total number of points
@@ -110,11 +111,9 @@ function convergence_test(p, Ns, R)
 
   # Analytic solution
   f(x) = exp(-((x - μ) / w)^2)
-  fp(x) = -2((x - μ) / w^2) * exp(-((x - μ) / w)^2)
 
   ue(x, t) = f(x - t) + R * f(2 - x - t)
-  ue_t(x, t) = -fp(x - t) - R * fp(2 - x - t)
-  ue_x(x, t) =  fp(x - t) - R * fp(2 - x - t)
+  ∂t_ue(x, t) = derivative(t->ue(x, t), t)
 
   # storage for error
   err_NC  = zeros(length(Ns))
@@ -127,10 +126,10 @@ function convergence_test(p, Ns, R)
     @info @sprintf " level %d with N = %4d" iter N
 
     (NC, x, H) = noncharacteristic_operator(p, N, R)
-    q0 = [ue.(x, 0); ue_t.(x, 0)]
+    q0 = [ue.(x, 0); ∂t_ue.(x, 0)]
 
     qf = exp(t_final * Matrix(NC)) * q0
-    qf_ex = [ue.(x, 1); ue_t.(x, 1)]
+    qf_ex = [ue.(x, 1); ∂t_ue.(x, 1)]
 
     ϵ = qf_ex - qf
 
@@ -147,10 +146,10 @@ function convergence_test(p, Ns, R)
     end
 
     (C, x, H) = characteristic_operator(p, N, R)
-    q0 = [ue.(x, 0); ue_t.(x, 0); 0; 0]
+    q0 = [ue.(x, 0); ∂t_ue.(x, 0); 0; 0]
 
     qf = exp(t_final * Matrix(C)) * q0
-    qf_ex = [ue.(x, 1); ue_t.(x, 1); ue(0, 1); ue(1, 1)]
+    qf_ex = [ue.(x, 1); ∂t_ue.(x, 1); ue(0, 1); ue(1, 1)]
 
     ϵ = qf_ex - qf
 
