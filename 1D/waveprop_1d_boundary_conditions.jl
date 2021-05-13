@@ -110,9 +110,9 @@ function convergence_test(p, Ns, R)
   w = 1 / 15
 
   # Analytic solution
-  f(x) = exp(-((x - μ) / w)^2)
+  f(x) = exp(-((x - μ) / w)^2) / 2
 
-  ue(x, t) = f(x - t) + R * f(2 - x - t)
+  ue(x, t) = (f(x - t) + f(x + t)) + R * (f(2 - x - t) + f(-x + t))
   ∂t_ue(x, t) = derivative(t->ue(x, t), t)
 
   # storage for error
