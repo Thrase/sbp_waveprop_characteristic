@@ -179,8 +179,9 @@ function create_metrics(
     ry = -xs ./ J
     sy = xr ./ J
 
-    hr = mapreduce(hypot, min, xr, yr) / (2Nr)
-    hs = mapreduce(hypot, min, xs, ys) / (2Ns)
+    # multiply by 2 since reference element is (-1, 1)
+    hr = 2mapreduce(hypot, min, xr, yr) / Nr
+    hs = 2mapreduce(hypot, min, xs, ys) / Ns
     hmin = min(hr, hs)
 
     # variable coefficient matrix components (BAE: these would only be so for
