@@ -3,7 +3,7 @@ using SparseArrays: sparsevec, spzeros, sparse
 using LinearAlgebra: I, eigvals
 using Logging: @info
 using Printf: @sprintf
-using PGFPlotsX: @pgf, Plot, Axis, Table, pgfsave, SemiLogYAxis
+using PGFPlotsX: @pgf, Plot, Axis, Table, pgfsave, SemiLogYAxis, LogLogAxis
 using ForwardDiff: derivative
 
 function noncharacteristic_operator(p, N, R)
@@ -100,7 +100,7 @@ function characteristic_operator(p, N, R)
   return (O, x, H)
 end
 
-function convergence_test(p, Ns, R)
+function convergence_test(p, Ns, R, t_final = 1.0)
   @info "sbp order = $p"
 
   # Pulse center
@@ -110,7 +110,8 @@ function convergence_test(p, Ns, R)
   w = 1 / 15
 
   # Analytic solution
-  f(x) = exp(-((x - μ) / w)^2) / 2
+  # f(x) = exp(-((x - μ) / w)^2) / 2
+  f(x) = 0 < x < 1 ? sin(2 * pi * x)^6 : 0
 
   ue(x, t) = (f(x - t) + f(x + t)) + R * (f(2 - x - t) + f(-x + t))
   ∂t_ue(x, t) = derivative(t->ue(x, t), t)
@@ -118,8 +119,6 @@ function convergence_test(p, Ns, R)
   # storage for error
   err_NC  = zeros(length(Ns))
   err_C   = zeros(length(Ns))
-
-  t_final = 1
 
   # loop over all N
   for (iter, N) = enumerate(Ns)
@@ -129,11 +128,11 @@ function convergence_test(p, Ns, R)
     q0 = [ue.(x, 0); ∂t_ue.(x, 0)]
 
     qf = exp(t_final * Matrix(NC)) * q0
-    qf_ex = [ue.(x, 1); ∂t_ue.(x, 1)]
 
-    ϵ = qf_ex - qf
+    Δu = ue.(x, t_final) - qf[1:N+1]
+    Δv = ∂t_ue.(x, t_final) - qf[(N+2):(2N+2)]
 
-    err_NC[iter] = sqrt(ϵ[1:N+1]' * H * ϵ[1:N+1])
+    err_NC[iter] = sqrt(Δu' * H * Δu)
     if iter > 1
       rate = ((log(err_NC[iter-1]) - log(err_NC[iter])) /
               (log(Ns[iter]) - log(Ns[iter-1])))
@@ -149,11 +148,11 @@ function convergence_test(p, Ns, R)
     q0 = [ue.(x, 0); ∂t_ue.(x, 0); 0; 0]
 
     qf = exp(t_final * Matrix(C)) * q0
-    qf_ex = [ue.(x, 1); ∂t_ue.(x, 1); ue(0, 1); ue(1, 1)]
 
-    ϵ = qf_ex - qf
+    Δu = ue.(x, t_final) - qf[1:N+1]
+    Δv = ∂t_ue.(x, t_final) - qf[(N+2):(2N+2)]
 
-    err_C[iter] = sqrt(ϵ[1:N+1]' * H * ϵ[1:N+1])
+    err_C[iter] = sqrt(Δu' * H * Δu)
     if iter > 1
       rate = ((log(err_C[iter-1]) - log(err_C[iter])) /
               (log(Ns[iter]) - log(Ns[iter-1])))
@@ -165,6 +164,7 @@ function convergence_test(p, Ns, R)
       error = %.2e""" err_C[iter]
     end
   end
+  return err_C, err_NC
 end
 
 function make_spectrum_plots(p, N, R)
@@ -284,7 +284,144 @@ function compare_eigs(p, N)
   pgfsave("real_eig.pdf", a)
 end
 
+#=
 for R in (-0.99, -0.9, 0, 0.9, 1.0)
   make_spectrum_plots(4, 50, R)
 end
 compare_eigs(4, 50)
+=#
+
+let
+  Ns = 17 * 2 .^ (0:5)
+  hs = 1 ./ Ns
+
+  tri_x = [hs[end-1], hs[end], hs[end-1], hs[end-1]]
+  tri_y = [hs[end-1], hs[end], hs[end  ], hs[end-1]] ./ hs[end-1]
+  scale = Dict()
+
+  scale[(-0.99, 2)] = 0.001
+  scale[( 0.0 , 2)] = 0.0002
+  scale[( 0.99, 2)] = 0.001
+
+  scale[(-0.99, 4)] = 1e-6
+  scale[( 0.0 , 4)] = 5e-7
+  scale[( 0.99, 4)] = 2e-6
+
+  scale[(-0.99, 6)] = 2e-7
+  scale[( 0.0 , 6)] = 1e-7
+  scale[( 0.99, 6)] = 1e-8
+  for R in (-0.99, 0.0, 0.99)
+    C2, NC2 = convergence_test(2, Ns, R, 0.9)
+    C4, NC4 = convergence_test(4, Ns, R, 0.9)
+    C6, NC6 = convergence_test(6, Ns, R, 0.9)
+
+
+    @pgf a = LogLogAxis(
+                        {
+                         ymax = 1,
+                         ymin = 1e-11,
+                         xmin = hs[end]/2,
+                         xmax = 2hs[1],
+                         xlabel = "\$h\$",
+                         ylabel = "\$\\|\\Delta u\\|_{H}\$",
+                        }
+                       )
+    tc2 = 0.6*NC2[end-1] * tri_y.^2
+    @pgf push!(a, Plot(
+                       {
+                        color = "black",
+                       },
+                       Table(tri_x, tc2)
+                      )
+              )
+    tc4 = 0.6*NC4[end-1] * tri_y.^4
+    @pgf push!(a, Plot(
+                       {
+                        color = "black",
+                       },
+                       Table(tri_x, 0.6*NC4[end-1] * tri_y.^4)
+                      )
+              )
+    tc6 = 0.6*NC6[end-1] * tri_y.^6
+    @pgf push!(a, Plot(
+                       {
+                        color = "black",
+                       },
+                       Table(tri_x, 0.6*NC6[end-1] * tri_y.^5)
+                      )
+              )
+    #=
+    @pgf push!(a,
+              [@sprintf("""
+               \\node[anchor=north] () at (axis cs:%e, %e){\$s = 2\$};
+               \\node[anchor=north] () at (axis cs:%e, %e){\$s = 4\$};
+               \\node[anchor=north] () at (axis cs:%e, %e){\$s = 5\$};
+               """,
+              (hs[end-1] + hs[end]) / 2, tc2[2],
+              (hs[end-1] + hs[end]) / 2, tc4[2],
+              (hs[end-1] + hs[end]) / 2, tc6[2],
+               )])
+    =#
+    @pgf push!(a,
+               [@sprintf("""
+                \\node[anchor=west] () at (axis cs:%e, %e){\$2\$};
+                \\node[anchor=west] () at (axis cs:%e, %e){\$4\$};
+                \\node[anchor=west] () at (axis cs:%e, %e){\$5\$};
+                """,
+                hs[end-1], exp((log(tc2[1]) + log(tc2[2]))/2),
+                hs[end-1], exp((log(tc4[1]) + log(tc4[2]))/2),
+                hs[end-1], exp((log(tc6[1]) + log(tc6[2]))/2),
+               )])
+
+    @pgf push!(a, Plot(
+                       {
+                        color = "red",
+                        mark = "o",
+                       },
+                       Table(hs, C2)
+                      )
+              )
+    @pgf push!(a, Plot(
+                       {
+                        color = "red",
+                        mark = "x",
+                       },
+                       Table(hs, NC2)
+                      )
+              )
+    @pgf push!(a, Plot(
+                       {
+                        color = "blue",
+                        mark = "o",
+                       },
+                       Table(hs, C4)
+                      )
+              )
+    @pgf push!(a, Plot(
+                       {
+                        color = "blue",
+                        mark = "x",
+                       },
+                       Table(hs, NC4)
+                      )
+              )
+    @pgf push!(a, Plot(
+                       {
+                        color = "green",
+                        mark = "o",
+                       },
+                       Table(hs, C6)
+                      )
+              )
+    @pgf push!(a, Plot(
+                       {
+                        color = "green",
+                        mark = "x",
+                       },
+                       Table(hs, NC6)
+                      )
+              )
+    pgfsave("convergence_$R.tex", a)
+    pgfsave("convergence_$R.pdf", a)
+  end
+end
