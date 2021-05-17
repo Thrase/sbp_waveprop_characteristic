@@ -9,7 +9,7 @@ let
             4,
             N0;
             characteristic_method = true,
-            cfl = 2,
+            cfl = 1 / 2,
             friction = (V) -> 128 * asinh(V),
             tspan = (0.0, 1.0),
             do_output = true,
