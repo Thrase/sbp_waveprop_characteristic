@@ -3,7 +3,7 @@ include("run_mms.jl")
 let
     N0 = 48
     αs = (1, 4, 16, 64, 128)
-    @show cfls = [5; 4 * 2.0 .^ (0:-1:-4)]
+    @show cfls = 2.0 .^ (0:-1:-5)
 
     for sbp_order in (2, 4, 6)
         for characteristic_method in (true, false)
