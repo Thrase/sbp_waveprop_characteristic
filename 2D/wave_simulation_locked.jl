@@ -231,7 +231,11 @@ let
             @sprintf("locked_energy_2p_%d_N0_%04d.csv", sbp_order, N),
             "w",
         ) do io
-            writedlm(io, [Array(ts) sqrt.(energy / energy[1])])
+            writedlm(
+                io,
+                [Array(ts) sqrt.(energy / energy[1]) 1 .-
+                                                     sqrt.(energy / energy[1])],
+            )
         end
 
         data[N] = (q = q, rhsops = rhsops)
