@@ -145,7 +145,7 @@ let
                 cyy = cyy,
             )
 
-        FToB[findall(FToB == BC_JUMP_INTERFACE)] .= BC_LOCKED_INTERFACE
+        FToB[findall(FToB .== BC_JUMP_INTERFACE)] .= BC_LOCKED_INTERFACE
 
         nelems = length(rhsops)
 
