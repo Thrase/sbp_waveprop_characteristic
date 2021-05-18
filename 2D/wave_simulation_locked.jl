@@ -227,7 +227,10 @@ let
             end
             energy[step + 1] = compute_energy(q, rhsops, Np)
         end
-        open(@sprintf("locked_energy_2p_%d_N0_%04d.csv", sbp_order, N), "w") do io
+        open(
+            @sprintf("locked_energy_2p_%d_N0_%04d.csv", sbp_order, N),
+            "w",
+        ) do io
             writedlm(io, [Array(ts) sqrt.(energy / energy[1])])
         end
 
