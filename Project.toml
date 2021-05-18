@@ -1,4 +1,5 @@
 [deps]
+DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 DiagonalSBP = "36369e19-1f1d-49f4-a65d-f0b77e6b4437"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 JuliaFormatter = "98e50ef6-434e-11e9-1051-2b60c6c9e899"
