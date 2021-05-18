@@ -96,7 +96,7 @@ let
     for N in Nvals
 
         # solver times (output done at each break point)
-        ts = 0:0.1:3
+        ts = 0:0.01:3
 
         bc_map = [
             BC_DIRICHLET,
