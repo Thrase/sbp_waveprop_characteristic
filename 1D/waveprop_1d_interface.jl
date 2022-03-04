@@ -224,7 +224,7 @@ function convergence_test(p, Ns, β, cfl_c, cfl_nc, output = false)
     # Pulse width
     w = 1 / 15
 
-    u0(x) = 0.9 * exp(-((x - μ) / w)^2)
+    u0(x) = exp(-((x - μ) / w)^2)
     v0(x) = derivative(t->u0(x-t), 0)
     σ0(x) = derivative(x->u0(x), x)
 
